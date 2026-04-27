@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useRef, useEffect } from "react";
+import React, { useRef } from "react";
 import { Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 import styles from "./page.module.css";
+import { useData } from "../context/DataContext";
 
 export default function CalendarPage() {
   const rightPanelRef = useRef(null);
   const leftPanelBodyRef = useRef(null);
+  const { rooms } = useData();
 
   // Sync scroll between left panel (Y) and right panel (Y/X)
   const handleScroll = () => {
@@ -14,22 +16,6 @@ export default function CalendarPage() {
       leftPanelBodyRef.current.scrollTop = rightPanelRef.current.scrollTop;
     }
   };
-
-  const rooms = [
-    "A-1. AniYuki",
-    "B-5. Guest House",
-    "B-6. TOMA HOUSE",
-    "FRONTIER VILLAGE@1",
-    "FRONTIER VILLAGE@2",
-    "FRONTIER VILLAGE@3",
-    "HB-1. Miyata",
-    "HB-2. Miyata",
-    "HR-1. Y51@Y51",
-    "INN BETWEEN WAVES@101",
-    "INN BETWEEN WAVES@102",
-    "INN BETWEEN WAVES@103",
-    "IZ.-1. Oyado Nikoni",
-  ];
 
   const dates = Array.from({ length: 31 }, (_, i) => i + 1); // Mock 1-31 days
 
@@ -61,8 +47,8 @@ export default function CalendarPage() {
               Room Name (物件名)
             </div>
             <div className={styles.leftBody} ref={leftPanelBodyRef}>
-              {rooms.map((room, i) => (
-                <div key={i} className={styles.roomRow}>{room}</div>
+              {rooms.map((room) => (
+                <div key={room.id} className={styles.roomRow}>{room.name || `Room ${room.id}`}</div>
               ))}
             </div>
           </div>
@@ -83,28 +69,23 @@ export default function CalendarPage() {
             </div>
 
             <div className={styles.gridBody}>
-              {rooms.map((room, rowIndex) => (
-                <div key={rowIndex} className={styles.gridRow}>
+              {rooms.map((room) => (
+                <div key={room.id} className={styles.gridRow}>
                   {dates.map((d, colIndex) => (
                     <div key={colIndex} className={`${styles.gridCell} ${d % 7 === 0 || d % 7 === 6 ? styles.weekend : ''}`}>
-                      {/* Randomly mock some empty slots */}
-                      {Math.random() > 0.8 && <span className={styles.vacantText}>空室</span>}
+                      {/* Show Vacant text on empty cells if the room is available globally */}
+                      {room.status === 'available' && <span className={styles.vacantText}>空室</span>}
                     </div>
                   ))}
                   
-                  {/* Mock Bookings absolute positioned */}
-                  {rowIndex === 1 && (
-                    <div className={`${styles.bookingBar} ${styles['status-occupied']}`} style={{ left: '100px', width: '200px' }}>
-                      Guest: Smith (Paid)
+                  {/* Dynamic Bookings based on room status */}
+                  {room.status === 'occupied' && (
+                    <div className={`${styles.bookingBar} ${styles['status-occupied']}`} style={{ left: '100px', width: '400px' }}>
+                      Guest: {room.tenant}
                     </div>
                   )}
-                  {rowIndex === 3 && (
-                    <div className={`${styles.bookingBar} ${styles['status-preblock']}`} style={{ left: '250px', width: '100px' }}>
-                      前後ブロック (Block)
-                    </div>
-                  )}
-                  {rowIndex === 6 && (
-                    <div className={`${styles.bookingBar} ${styles['status-maintenance']}`} style={{ left: '500px', width: '150px' }}>
+                  {room.status === 'maintenance' && (
+                    <div className={`${styles.bookingBar} ${styles['status-maintenance']}`} style={{ left: '50px', width: '250px' }}>
                       Maintenance
                     </div>
                   )}

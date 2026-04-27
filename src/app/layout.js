@@ -1,6 +1,7 @@
 import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import { DataProvider } from "./context/DataContext";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -21,12 +22,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${outfit.variable} ${inter.variable}`}>
       <body>
-        <div className="app-layout">
-          <Sidebar />
-          <main className="main-content">
-            {children}
-          </main>
-        </div>
+        <DataProvider>
+          <div className="app-layout">
+            <Sidebar />
+            <main className="main-content">
+              {children}
+            </main>
+          </div>
+        </DataProvider>
       </body>
     </html>
   );

@@ -1,22 +1,30 @@
+"use client";
 import { Plus, Search, Filter, Edit } from "lucide-react";
 import styles from "./page.module.css";
+import { useData } from "../context/DataContext";
 
 export default function RoomsPage() {
-  // Mock data สำหรับแสดงผลเบื้องต้น
-  const rooms = [
-    { id: "101", type: "Standard", price: "5,000", status: "occupied", tenant: "Somchai S." },
-    { id: "102", type: "Standard", price: "5,000", status: "available", tenant: "-" },
-    { id: "103", type: "Deluxe", price: "7,500", status: "maintenance", tenant: "-" },
-    { id: "104", type: "Standard", price: "5,000", status: "occupied", tenant: "Somsri M." },
-    { id: "105", type: "Standard", price: "5,000", status: "available", tenant: "-" },
-    { id: "201", type: "Suite", price: "12,000", status: "occupied", tenant: "Wichai T." },
-  ];
+  const { rooms, updateRoom } = useData();
+
+  const handleEdit = (room) => {
+    const newStatus = prompt(`Update status for Room ${room.id} (available, occupied, maintenance):`, room.status);
+    if (!newStatus) return;
+    
+    let newTenant = room.tenant;
+    if (newStatus === 'occupied') {
+      newTenant = prompt(`Enter tenant name for Room ${room.id}:`, room.tenant === '-' ? '' : room.tenant) || '-';
+    } else {
+      newTenant = '-';
+    }
+
+    updateRoom(room.id, { status: newStatus.toLowerCase(), tenant: newTenant });
+  };
 
   return (
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
         <h1 className="page-title">Room Management</h1>
-        <button className="btn btn-primary">
+        <button className="btn btn-primary" onClick={() => alert('Add room modal would open here.')}>
           <Plus size={20} />
           Add New Room
         </button>
@@ -42,12 +50,12 @@ export default function RoomsPage() {
         {rooms.map((room) => (
           <div key={room.id} className={`card glass ${styles.roomCard}`}>
             <div className={styles.roomHeader}>
-              <h2>Room {room.id}</h2>
+              <h2>{room.name || `Room ${room.id}`}</h2>
               <span className={`badge ${
                 room.status === 'available' ? 'badge-success' : 
                 room.status === 'occupied' ? 'badge-danger' : 'badge-warning'
               }`}>
-                {room.status}
+                {room.status.toUpperCase()}
               </span>
             </div>
             
@@ -59,7 +67,7 @@ export default function RoomsPage() {
 
             <div className={styles.roomActions}>
               <button className="btn btn-outline" style={{ flex: 1 }}>View Details</button>
-              <button className={styles.iconBtn} title="Edit Room">
+              <button className={styles.iconBtn} title="Edit Room" onClick={() => handleEdit(room)}>
                 <Edit size={18} />
               </button>
             </div>
