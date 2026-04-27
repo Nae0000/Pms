@@ -1,0 +1,187 @@
+.calendarContainer {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 120px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.calendarToolbar {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-input);
+}
+
+.calendarToolbar h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.schedulerWrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.leftPanel {
+  width: 250px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  z-index: 10;
+}
+
+.leftHeader {
+  height: 60px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  align-items: flex-end;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  background: var(--bg-input);
+}
+
+.leftBody {
+  flex: 1;
+  overflow-y: hidden;
+}
+
+.roomRow {
+  height: 40px;
+  padding: 0 1rem;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.roomRow:hover {
+  background: rgba(0,0,0,0.02);
+}
+
+.rightPanel {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+.rightHeader {
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-input);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.monthRow {
+  height: 30px;
+  display: flex;
+}
+
+.monthCell {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-right: 1px solid var(--border-light);
+  white-space: nowrap;
+}
+
+.dateRow {
+  height: 30px;
+  display: flex;
+}
+
+.dateCell {
+  width: 50px;
+  min-width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-main);
+  border-right: 1px solid var(--border-light);
+}
+
+.weekend {
+  background: rgba(0,0,0,0.03);
+}
+
+.gridBody {
+  position: relative;
+}
+
+.gridRow {
+  height: 40px;
+  display: flex;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.gridCell {
+  width: 50px;
+  min-width: 50px;
+  border-right: 1px solid var(--border-light);
+  position: relative;
+}
+
+/* Bookings */
+.bookingBar {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  color: white;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  z-index: 2;
+  transition: opacity 0.2s;
+}
+
+.bookingBar:hover {
+  opacity: 0.9;
+}
+
+.status-occupied { background-color: var(--primary); }
+.status-maintenance { background-color: var(--warning); }
+.status-preblock { background-color: #fca5a5; color: #7f1d1d; } /* Light red */
+
+.vacantText {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  opacity: 0.5;
+}
