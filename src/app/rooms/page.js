@@ -10,6 +10,9 @@ export default function RoomsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+
   const [editingRoom, setEditingRoom] = useState(null);
   const [viewingRoom, setViewingRoom] = useState(null);
 
@@ -70,6 +73,16 @@ export default function RoomsPage() {
     setIsAddModalOpen(false);
   };
 
+  const filteredRooms = rooms.filter(room => {
+    const nameMatch = room.name ? room.name.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const tenantMatch = room.tenant ? room.tenant.toLowerCase().includes(searchQuery.toLowerCase()) : false;
+    const matchesSearch = nameMatch || tenantMatch;
+    
+    const matchesStatus = filterStatus === "all" || room.status === filterStatus;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
@@ -88,16 +101,28 @@ export default function RoomsPage() {
             placeholder="ค้นหาชื่อห้องพัก หรือ ชื่อผู้เช่า..." 
             className="input-field" 
             style={{ paddingLeft: '2.5rem' }} 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <button className="btn btn-outline">
-          <Filter size={20} />
-          ตัวกรอง (Filters)
-        </button>
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <select 
+            className="btn btn-outline" 
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            style={{ appearance: 'none', paddingRight: '2.5rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.875rem' }}
+          >
+            <option value="all">ทั้งหมด (All)</option>
+            <option value="available">ว่าง (Available)</option>
+            <option value="occupied">มีผู้เช่า (Occupied)</option>
+            <option value="maintenance">ซ่อมบำรุง (Maintenance)</option>
+          </select>
+          <Filter size={18} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'inherit' }} />
+        </div>
       </div>
 
       <div className={styles.roomGrid}>
-        {rooms.map((room) => (
+        {filteredRooms.map((room) => (
           <div key={room.id} className={`card glass ${styles.roomCard}`}>
             <div className={styles.roomHeader}>
               <h2>{room.name || `Room ${room.id}`}</h2>
