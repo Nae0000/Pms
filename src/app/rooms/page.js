@@ -46,14 +46,14 @@ export default function RoomsPage() {
   };
 
   const handleImageChange = (e) => {
-    let url = e.target.value;
-    if (url.includes('drive.google.com/file/d/')) {
-      const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      if (match && match[1]) {
-        url = `https://drive.google.com/uc?export=view&id=${match[1]}`;
-      }
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setRoomImage(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
-    setRoomImage(url);
   };
 
   const handleDetailsClick = (room) => {
@@ -197,18 +197,17 @@ export default function RoomsPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Image URL (ลิงก์รูปภาพ หรือ Google Drive)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>อัปโหลดรูปภาพฝังตัว (Upload Embedded Image)</label>
                 <input 
-                  type="text" 
+                  type="file" 
+                  accept="image/*"
                   className="input-field" 
-                  value={roomImage}
                   onChange={handleImageChange}
-                  placeholder="https://example.com/image.jpg หรือแชร์จาก Google Drive"
-                  style={{ width: '100%' }}
+                  style={{ width: '100%', padding: '0.5rem' }}
                 />
-                {roomImage && roomImage.includes('drive.google.com') && (
+                {roomImage && roomImage.startsWith('data:image') && (
                   <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--success)' }}>
-                    ✓ แปลงลิงก์ Google Drive อัตโนมัติแล้ว
+                    ✓ รูปภาพถูกฝังลงในระบบเรียบร้อยแล้ว
                   </div>
                 )}
               </div>
@@ -309,18 +308,17 @@ export default function RoomsPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Image URL (ลิงก์รูปภาพ หรือ Google Drive)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>อัปโหลดรูปภาพฝังตัว (Upload Embedded Image)</label>
                 <input 
-                  type="text" 
+                  type="file" 
+                  accept="image/*"
                   className="input-field" 
-                  value={roomImage}
                   onChange={handleImageChange}
-                  placeholder="https://example.com/image.jpg หรือแชร์จาก Google Drive"
-                  style={{ width: '100%' }}
+                  style={{ width: '100%', padding: '0.5rem' }}
                 />
-                {roomImage && roomImage.includes('drive.google.com') && (
+                {roomImage && roomImage.startsWith('data:image') && (
                   <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--success)' }}>
-                    ✓ แปลงลิงก์ Google Drive อัตโนมัติแล้ว
+                    ✓ รูปภาพถูกฝังลงในระบบเรียบร้อยแล้ว
                   </div>
                 )}
               </div>
