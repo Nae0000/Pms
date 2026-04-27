@@ -45,6 +45,17 @@ export default function RoomsPage() {
     setIsAddModalOpen(true);
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setRoomImage(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleDetailsClick = (room) => {
     setViewingRoom(room);
     setIsDetailsModalOpen(true);
@@ -186,15 +197,19 @@ export default function RoomsPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Image URL (ลิงก์รูปภาพ)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>อัปโหลดรูปภาพ (Upload Image)</label>
                 <input 
-                  type="text" 
+                  type="file" 
+                  accept="image/*"
                   className="input-field" 
-                  value={roomImage} 
-                  onChange={(e) => setRoomImage(e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                  style={{ width: '100%' }}
+                  onChange={handleImageUpload}
+                  style={{ width: '100%', padding: '0.5rem' }}
                 />
+                {roomImage && roomImage.startsWith('data:image') && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--primary)' }}>
+                    ✓ รูปภาพถูกเลือกและพร้อมใช้งานแล้ว
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '1rem' }}>
@@ -293,15 +308,19 @@ export default function RoomsPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Image URL (ลิงก์รูปภาพ)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>อัปโหลดรูปภาพ (Upload Image)</label>
                 <input 
-                  type="text" 
+                  type="file" 
+                  accept="image/*"
                   className="input-field" 
-                  value={roomImage} 
-                  onChange={(e) => setRoomImage(e.target.value)}
-                  placeholder="https://example.com/image.jpg"
-                  style={{ width: '100%' }}
+                  onChange={handleImageUpload}
+                  style={{ width: '100%', padding: '0.5rem' }}
                 />
+                {roomImage && roomImage.startsWith('data:image') && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--primary)' }}>
+                    ✓ รูปภาพถูกเลือกและพร้อมใช้งานแล้ว
+                  </div>
+                )}
               </div>
 
               <div style={{ display: 'flex', gap: '1rem' }}>
