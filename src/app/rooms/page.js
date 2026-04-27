@@ -155,16 +155,20 @@ export default function RoomsPage() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Type (ประเภท)</label>
-                  <select 
+                  <input 
+                    list="room-types"
                     className="input-field" 
                     value={roomType} 
                     onChange={(e) => setRoomType(e.target.value)}
+                    placeholder="e.g. Standard"
                     style={{ width: '100%' }}
-                  >
-                    <option value="Standard">Standard</option>
-                    <option value="Deluxe">Deluxe</option>
-                    <option value="Suite">Suite</option>
-                  </select>
+                    required
+                  />
+                  <datalist id="room-types">
+                    <option value="Standard" />
+                    <option value="Deluxe" />
+                    <option value="Suite" />
+                  </datalist>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Rent (ค่าเช่า/เดือน)</label>
@@ -246,16 +250,20 @@ export default function RoomsPage() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Type (ประเภท)</label>
-                  <select 
+                  <input 
+                    list="room-types"
                     className="input-field" 
                     value={roomType} 
                     onChange={(e) => setRoomType(e.target.value)}
+                    placeholder="e.g. Standard"
                     style={{ width: '100%' }}
-                  >
-                    <option value="Standard">Standard</option>
-                    <option value="Deluxe">Deluxe</option>
-                    <option value="Suite">Suite</option>
-                  </select>
+                    required
+                  />
+                  <datalist id="room-types">
+                    <option value="Standard" />
+                    <option value="Deluxe" />
+                    <option value="Suite" />
+                  </datalist>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Rent (ค่าเช่า/เดือน)</label>
