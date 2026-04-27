@@ -22,6 +22,7 @@ export default function RoomsPage() {
   const [tenant, setTenant] = useState("");
   const [roomType, setRoomType] = useState("Standard");
   const [roomPrice, setRoomPrice] = useState("");
+  const [roomImage, setRoomImage] = useState("");
 
   const handleEditClick = (room) => {
     setEditingRoom(room);
@@ -30,6 +31,7 @@ export default function RoomsPage() {
     setTenant(room.tenant === "-" ? "" : room.tenant);
     setRoomType(room.type || "Standard");
     setRoomPrice(room.price || "");
+    setRoomImage(room.image || "");
     setIsModalOpen(true);
   };
 
@@ -39,6 +41,7 @@ export default function RoomsPage() {
     setTenant("");
     setRoomType("Standard");
     setRoomPrice("");
+    setRoomImage("");
     setIsAddModalOpen(true);
   };
 
@@ -56,6 +59,7 @@ export default function RoomsPage() {
         price: roomPrice || "0",
         status: status,
         tenant: status === 'occupied' ? (tenant || "-") : "-",
+        image: roomImage,
       });
       setIsModalOpen(false);
     }
@@ -69,6 +73,7 @@ export default function RoomsPage() {
       price: roomPrice || "0",
       status: status,
       tenant: status === 'occupied' ? (tenant || "-") : "-",
+      image: roomImage,
     });
     setIsAddModalOpen(false);
   };
@@ -124,6 +129,9 @@ export default function RoomsPage() {
       <div className={styles.roomGrid}>
         {filteredRooms.map((room) => (
           <div key={room.id} className={`card glass ${styles.roomCard}`}>
+            <div className={styles.roomImageContainer}>
+              <img src={room.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"} alt={room.name} className={styles.roomImage} />
+            </div>
             <div className={styles.roomHeader}>
               <h2>{room.name || `Room ${room.id}`}</h2>
               <span className={`badge ${
@@ -174,6 +182,18 @@ export default function RoomsPage() {
                   placeholder="e.g. A-1. AniYuki"
                   style={{ width: '100%' }}
                   required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Image URL (ลิงก์รูปภาพ)</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={roomImage} 
+                  onChange={(e) => setRoomImage(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  style={{ width: '100%' }}
                 />
               </div>
 
@@ -272,6 +292,18 @@ export default function RoomsPage() {
                 />
               </div>
 
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Image URL (ลิงก์รูปภาพ)</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={roomImage} 
+                  onChange={(e) => setRoomImage(e.target.value)}
+                  placeholder="https://example.com/image.jpg"
+                  style={{ width: '100%' }}
+                />
+              </div>
+
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Type (ประเภท)</label>
@@ -357,6 +389,9 @@ export default function RoomsPage() {
             </div>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div className={styles.roomImageContainer} style={{ margin: '0 0 1rem 0', borderRadius: 'var(--radius-lg)' }}>
+                <img src={viewingRoom.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"} alt={viewingRoom.name} className={styles.roomImage} />
+              </div>
               <div>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>รหัสห้อง (Room ID)</p>
                 <p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.id}</p>
