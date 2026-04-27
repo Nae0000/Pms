@@ -10,11 +10,13 @@ export default function RoomsPage() {
   const [editingRoom, setEditingRoom] = useState(null);
 
   // Form state
+  const [roomName, setRoomName] = useState("");
   const [status, setStatus] = useState("available");
   const [tenant, setTenant] = useState("");
 
   const handleEditClick = (room) => {
     setEditingRoom(room);
+    setRoomName(room.name || `Room ${room.id}`);
     setStatus(room.status);
     setTenant(room.tenant === "-" ? "" : room.tenant);
     setIsModalOpen(true);
@@ -24,6 +26,7 @@ export default function RoomsPage() {
     e.preventDefault();
     if (editingRoom) {
       updateRoom(editingRoom.id, {
+        name: roomName,
         status: status,
         tenant: status === 'occupied' ? (tenant || "-") : "-",
       });
@@ -91,7 +94,7 @@ export default function RoomsPage() {
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content glass" onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>Edit {editingRoom?.name}</h2>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>Edit Room Details</h2>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <X size={20} />
               </button>
@@ -99,7 +102,20 @@ export default function RoomsPage() {
             
             <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Status</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Room Name (ชื่อห้อง)</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={roomName} 
+                  onChange={(e) => setRoomName(e.target.value)}
+                  placeholder="e.g. A-1. AniYuki"
+                  style={{ width: '100%' }}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Status (สถานะ)</label>
                 <select 
                   className="input-field" 
                   value={status} 
@@ -114,7 +130,7 @@ export default function RoomsPage() {
 
               {status === 'occupied' && (
                 <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Tenant Name</label>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Tenant Name (ชื่อผู้เช่า)</label>
                   <input 
                     type="text" 
                     className="input-field" 
