@@ -25,6 +25,8 @@ export default function RoomsPage() {
     setRoomName(room.name || `Room ${room.id}`);
     setStatus(room.status);
     setTenant(room.tenant === "-" ? "" : room.tenant);
+    setRoomType(room.type || "Standard");
+    setRoomPrice(room.price || "");
     setIsModalOpen(true);
   };
 
@@ -47,6 +49,8 @@ export default function RoomsPage() {
     if (editingRoom) {
       updateRoom(editingRoom.id, {
         name: roomName,
+        type: roomType,
+        price: roomPrice || "0",
         status: status,
         tenant: status === 'occupied' ? (tenant || "-") : "-",
       });
@@ -146,6 +150,34 @@ export default function RoomsPage() {
                   style={{ width: '100%' }}
                   required
                 />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Type (ประเภท)</label>
+                  <select 
+                    className="input-field" 
+                    value={roomType} 
+                    onChange={(e) => setRoomType(e.target.value)}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="Standard">Standard</option>
+                    <option value="Deluxe">Deluxe</option>
+                    <option value="Suite">Suite</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Rent (ค่าเช่า/เดือน)</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    value={roomPrice} 
+                    onChange={(e) => setRoomPrice(e.target.value)}
+                    placeholder="e.g. 5,000"
+                    style={{ width: '100%' }}
+                    required
+                  />
+                </div>
               </div>
 
               <div>
