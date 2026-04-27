@@ -1,18 +1,24 @@
 "use client";
 import { useState } from "react";
-import { Plus, Search, Filter, Edit, X } from "lucide-react";
+import { Plus, Search, Filter, Edit, X, Info } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
 
 export default function RoomsPage() {
-  const { rooms, updateRoom } = useData();
+  const { rooms, updateRoom, addRoom } = useData();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  
   const [editingRoom, setEditingRoom] = useState(null);
+  const [viewingRoom, setViewingRoom] = useState(null);
 
   // Form state
   const [roomName, setRoomName] = useState("");
   const [status, setStatus] = useState("available");
   const [tenant, setTenant] = useState("");
+  const [roomType, setRoomType] = useState("Standard");
+  const [roomPrice, setRoomPrice] = useState("");
 
   const handleEditClick = (room) => {
     setEditingRoom(room);
@@ -22,7 +28,21 @@ export default function RoomsPage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e) => {
+  const handleAddClick = () => {
+    setRoomName("");
+    setStatus("available");
+    setTenant("");
+    setRoomType("Standard");
+    setRoomPrice("");
+    setIsAddModalOpen(true);
+  };
+
+  const handleDetailsClick = (room) => {
+    setViewingRoom(room);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleSaveEdit = (e) => {
     e.preventDefault();
     if (editingRoom) {
       updateRoom(editingRoom.id, {
@@ -34,11 +54,23 @@ export default function RoomsPage() {
     }
   };
 
+  const handleSaveAdd = (e) => {
+    e.preventDefault();
+    addRoom({
+      name: roomName,
+      type: roomType,
+      price: roomPrice || "0",
+      status: status,
+      tenant: status === 'occupied' ? (tenant || "-") : "-",
+    });
+    setIsAddModalOpen(false);
+  };
+
   return (
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
         <h1 className="page-title">การจัดการห้องพัก (Room Management)</h1>
-        <button className="btn btn-primary" onClick={() => alert('Future Feature: Add Room Database Form')}>
+        <button className="btn btn-primary" onClick={handleAddClick}>
           <Plus size={20} />
           เพิ่มห้องใหม่ (Add Room)
         </button>
@@ -80,7 +112,9 @@ export default function RoomsPage() {
             </div>
 
             <div className={styles.roomActions}>
-              <button className="btn btn-outline" style={{ flex: 1 }}>ดูรายละเอียด (Details)</button>
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => handleDetailsClick(room)}>
+                ดูรายละเอียด (Details)
+              </button>
               <button className={styles.iconBtn} title="Edit Room" onClick={() => handleEditClick(room)}>
                 <Edit size={18} />
               </button>
@@ -100,7 +134,7 @@ export default function RoomsPage() {
               </button>
             </div>
             
-            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Room Name (ชื่อห้อง)</label>
                 <input 
@@ -148,6 +182,154 @@ export default function RoomsPage() {
                 <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>บันทึก (Save Changes)</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Modal */}
+      {isAddModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content glass" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>เพิ่มห้องใหม่ (Add New Room)</h2>
+              <button onClick={() => setIsAddModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveAdd} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Room Name (ชื่อห้อง)</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={roomName} 
+                  onChange={(e) => setRoomName(e.target.value)}
+                  placeholder="e.g. C-1. New Room"
+                  style={{ width: '100%' }}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Type (ประเภท)</label>
+                  <select 
+                    className="input-field" 
+                    value={roomType} 
+                    onChange={(e) => setRoomType(e.target.value)}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="Standard">Standard</option>
+                    <option value="Deluxe">Deluxe</option>
+                    <option value="Suite">Suite</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Rent (ค่าเช่า/เดือน)</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    value={roomPrice} 
+                    onChange={(e) => setRoomPrice(e.target.value)}
+                    placeholder="e.g. 5,000"
+                    style={{ width: '100%' }}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Status (สถานะ)</label>
+                <select 
+                  className="input-field" 
+                  value={status} 
+                  onChange={(e) => setStatus(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <option value="available">Available (ว่าง)</option>
+                  <option value="occupied">Occupied (มีผู้เช่า)</option>
+                  <option value="maintenance">Maintenance (ซ่อมบำรุง)</option>
+                </select>
+              </div>
+
+              {status === 'occupied' && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Tenant Name (ชื่อผู้เช่า)</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    value={tenant} 
+                    onChange={(e) => setTenant(e.target.value)}
+                    placeholder="ใส่ชื่อผู้เช่า (Enter tenant name)"
+                    style={{ width: '100%' }}
+                    required
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setIsAddModalOpen(false)}>ยกเลิก (Cancel)</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>เพิ่มห้อง (Add Room)</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Details Modal */}
+      {isDetailsModalOpen && viewingRoom && (
+        <div className="modal-overlay">
+          <div className="modal-content glass" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Info size={24} style={{ color: 'var(--primary)' }} />
+                <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>รายละเอียดห้อง (Room Details)</h2>
+              </div>
+              <button onClick={() => setIsDetailsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>รหัสห้อง (Room ID)</p>
+                <p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.id}</p>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ชื่อห้อง (Room Name)</p>
+                <p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.name || '-'}</p>
+              </div>
+              <div style={{ display: 'flex', gap: '2rem' }}>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ประเภท (Type)</p>
+                  <p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.type}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ค่าเช่า (Rent)</p>
+                  <p style={{ fontSize: '1rem', fontWeight: '500' }}>฿{viewingRoom.price}/เดือน</p>
+                </div>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>สถานะ (Status)</p>
+                <span className={`badge ${
+                  viewingRoom.status === 'available' ? 'badge-success' : 
+                  viewingRoom.status === 'occupied' ? 'badge-danger' : 'badge-warning'
+                }`}>
+                  {viewingRoom.status.toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ชื่อผู้เช่า (Tenant)</p>
+                <p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.tenant}</p>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={() => setIsDetailsModalOpen(false)}>
+                ปิด (Close)
+              </button>
+            </div>
           </div>
         </div>
       )}

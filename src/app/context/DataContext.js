@@ -17,8 +17,16 @@ export const DataProvider = ({ children }) => {
     setRooms(rooms.map(r => r.id === id ? { ...r, ...updatedData } : r));
   };
 
+  const addRoom = (newRoomData) => {
+    const newRoom = {
+      id: Date.now().toString(),
+      ...newRoomData
+    };
+    setRooms([...rooms, newRoom]);
+  };
+
   return (
-    <DataContext.Provider value={{ rooms, setRooms, updateRoom }}>
+    <DataContext.Provider value={{ rooms, setRooms, updateRoom, addRoom }}>
       {children}
     </DataContext.Provider>
   );
