@@ -1,30 +1,41 @@
 "use client";
-import { Plus, Search, Filter, Edit } from "lucide-react";
+import { useState } from "react";
+import { Plus, Search, Filter, Edit, X } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
 
 export default function RoomsPage() {
   const { rooms, updateRoom } = useData();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingRoom, setEditingRoom] = useState(null);
 
-  const handleEdit = (room) => {
-    const newStatus = prompt(`Update status for Room ${room.id} (available, occupied, maintenance):`, room.status);
-    if (!newStatus) return;
-    
-    let newTenant = room.tenant;
-    if (newStatus === 'occupied') {
-      newTenant = prompt(`Enter tenant name for Room ${room.id}:`, room.tenant === '-' ? '' : room.tenant) || '-';
-    } else {
-      newTenant = '-';
+  // Form state
+  const [status, setStatus] = useState("available");
+  const [tenant, setTenant] = useState("");
+
+  const handleEditClick = (room) => {
+    setEditingRoom(room);
+    setStatus(room.status);
+    setTenant(room.tenant === "-" ? "" : room.tenant);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    if (editingRoom) {
+      updateRoom(editingRoom.id, {
+        status: status,
+        tenant: status === 'occupied' ? (tenant || "-") : "-",
+      });
+      setIsModalOpen(false);
     }
-
-    updateRoom(room.id, { status: newStatus.toLowerCase(), tenant: newTenant });
   };
 
   return (
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
         <h1 className="page-title">Room Management</h1>
-        <button className="btn btn-primary" onClick={() => alert('Add room modal would open here.')}>
+        <button className="btn btn-primary" onClick={() => alert('Future Feature: Add Room Database Form')}>
           <Plus size={20} />
           Add New Room
         </button>
@@ -67,13 +78,63 @@ export default function RoomsPage() {
 
             <div className={styles.roomActions}>
               <button className="btn btn-outline" style={{ flex: 1 }}>View Details</button>
-              <button className={styles.iconBtn} title="Edit Room" onClick={() => handleEdit(room)}>
+              <button className={styles.iconBtn} title="Edit Room" onClick={() => handleEditClick(room)}>
                 <Edit size={18} />
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Edit Modal */}
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content glass" onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>Edit {editingRoom?.name}</h2>
+              <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Status</label>
+                <select 
+                  className="input-field" 
+                  value={status} 
+                  onChange={(e) => setStatus(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <option value="available">Available (ว่าง)</option>
+                  <option value="occupied">Occupied (มีผู้เช่า)</option>
+                  <option value="maintenance">Maintenance (ซ่อมบำรุง)</option>
+                </select>
+              </div>
+
+              {status === 'occupied' && (
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Tenant Name</label>
+                  <input 
+                    type="text" 
+                    className="input-field" 
+                    value={tenant} 
+                    onChange={(e) => setTenant(e.target.value)}
+                    placeholder="Enter tenant name"
+                    style={{ width: '100%' }}
+                    required
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setIsModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Save Changes</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
