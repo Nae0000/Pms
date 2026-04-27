@@ -5,7 +5,7 @@ import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
 
 export default function TenantsPage() {
-  const { tenants, addTenant, updateTenant, deleteTenant } = useData();
+  const { tenants, addTenant, updateTenant, deleteTenant, rooms } = useData();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -212,14 +212,17 @@ export default function TenantsPage() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>ห้องพัก (Room)</label>
-                  <input 
-                    type="text"
+                  <select 
                     className="input-field" 
                     value={room} 
                     onChange={(e) => setRoom(e.target.value)}
-                    placeholder="e.g. 101"
                     style={{ width: '100%' }}
-                  />
+                  >
+                    <option value="">- ไม่ระบุห้อง (None) -</option>
+                    {rooms && rooms.map(r => (
+                      <option key={r.id} value={r.id}>{r.id} {r.name ? `- ${r.name}` : ''}</option>
+                    ))}
+                  </select>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>เบอร์โทรศัพท์ (Phone)</label>
@@ -308,13 +311,17 @@ export default function TenantsPage() {
               <div style={{ display: 'flex', gap: '1rem' }}>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>ห้องพัก (Room)</label>
-                  <input 
-                    type="text"
+                  <select 
                     className="input-field" 
                     value={room} 
                     onChange={(e) => setRoom(e.target.value)}
                     style={{ width: '100%' }}
-                  />
+                  >
+                    <option value="">- ไม่ระบุห้อง (None) -</option>
+                    {rooms && rooms.map(r => (
+                      <option key={r.id} value={r.id}>{r.id} {r.name ? `- ${r.name}` : ''}</option>
+                    ))}
+                  </select>
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>เบอร์โทรศัพท์ (Phone)</label>
