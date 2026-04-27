@@ -3,6 +3,8 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .controls {
@@ -10,11 +12,14 @@
   gap: 1rem;
   margin-bottom: 2rem;
   padding: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .searchBox {
   position: relative;
   flex: 1;
+  min-width: 200px;
 }
 
 .searchIcon {
@@ -46,6 +51,7 @@
   color: var(--text-muted);
   font-size: 0.875rem;
   background-color: var(--bg-input);
+  white-space: nowrap;
 }
 
 .tenantTable tr:last-child td {
@@ -56,10 +62,26 @@
   background-color: rgba(0, 0, 0, 0.02);
 }
 
+.tenantTable tbody tr {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
 .tenantInfo {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.tenantNameBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+.tenantNickname {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
 }
 
 .avatar {
@@ -73,6 +95,7 @@
   justify-content: center;
   font-weight: 600;
   font-size: 0.875rem;
+  flex-shrink: 0;
 }
 
 .contactInfo {
@@ -110,4 +133,180 @@
 .iconBtn:hover {
   background: var(--bg-input);
   color: var(--primary);
+}
+
+/* Form Section Dividers */
+.formSection {
+  border-top: 1px solid var(--border-light);
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+}
+
+.formSectionTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.formSectionTitle svg {
+  opacity: 0.7;
+}
+
+/* Social Contact Badge */
+.socialBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  border-radius: 9999px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Import Button */
+.importBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  border: 1px solid #10B981;
+  background: transparent;
+  color: #10B981;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.importBtn:hover {
+  background: #10B981;
+  color: white;
+}
+
+.importBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Import Modal */
+.importList {
+  max-height: 400px;
+  overflow-y: auto;
+  margin: 1rem 0;
+}
+
+.importItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-light);
+  transition: background-color 0.15s ease;
+}
+
+.importItem:hover {
+  background: var(--bg-input);
+}
+
+.importItem input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.importItemInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.importItemName {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.importItemMeta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.importActions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.importCount {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* Detail Modal */
+.detailGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1.5rem;
+}
+
+.detailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.detailLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detailValue {
+  font-size: 0.9rem;
+  color: var(--text-main);
+  word-break: break-word;
+}
+
+.detailFull {
+  grid-column: 1 / -1;
+}
+
+/* Occupation & Work Info in Table */
+.workInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.85rem;
+}
+
+.workInfoLabel {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .detailGrid {
+    grid-template-columns: 1fr;
+  }
 }
