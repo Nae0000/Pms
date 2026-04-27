@@ -45,15 +45,15 @@ export default function RoomsPage() {
     setIsAddModalOpen(true);
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setRoomImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+  const handleImageChange = (e) => {
+    let url = e.target.value;
+    if (url.includes('drive.google.com/file/d/')) {
+      const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        url = `https://drive.google.com/uc?export=view&id=${match[1]}`;
+      }
     }
+    setRoomImage(url);
   };
 
   const handleDetailsClick = (room) => {
@@ -197,17 +197,18 @@ export default function RoomsPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>อัปโหลดรูปภาพ (Upload Image)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Image URL (ลิงก์รูปภาพ หรือ Google Drive)</label>
                 <input 
-                  type="file" 
-                  accept="image/*"
+                  type="text" 
                   className="input-field" 
-                  onChange={handleImageUpload}
-                  style={{ width: '100%', padding: '0.5rem' }}
+                  value={roomImage}
+                  onChange={handleImageChange}
+                  placeholder="https://example.com/image.jpg หรือแชร์จาก Google Drive"
+                  style={{ width: '100%' }}
                 />
-                {roomImage && roomImage.startsWith('data:image') && (
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--primary)' }}>
-                    ✓ รูปภาพถูกเลือกและพร้อมใช้งานแล้ว
+                {roomImage && roomImage.includes('drive.google.com') && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--success)' }}>
+                    ✓ แปลงลิงก์ Google Drive อัตโนมัติแล้ว
                   </div>
                 )}
               </div>
@@ -308,17 +309,18 @@ export default function RoomsPage() {
               </div>
 
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>อัปโหลดรูปภาพ (Upload Image)</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Image URL (ลิงก์รูปภาพ หรือ Google Drive)</label>
                 <input 
-                  type="file" 
-                  accept="image/*"
+                  type="text" 
                   className="input-field" 
-                  onChange={handleImageUpload}
-                  style={{ width: '100%', padding: '0.5rem' }}
+                  value={roomImage}
+                  onChange={handleImageChange}
+                  placeholder="https://example.com/image.jpg หรือแชร์จาก Google Drive"
+                  style={{ width: '100%' }}
                 />
-                {roomImage && roomImage.startsWith('data:image') && (
-                  <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--primary)' }}>
-                    ✓ รูปภาพถูกเลือกและพร้อมใช้งานแล้ว
+                {roomImage && roomImage.includes('drive.google.com') && (
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: 'var(--success)' }}>
+                    ✓ แปลงลิงก์ Google Drive อัตโนมัติแล้ว
                   </div>
                 )}
               </div>
