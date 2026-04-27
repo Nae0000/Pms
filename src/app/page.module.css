@@ -1,0 +1,151 @@
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.statHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.statValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.statIcon {
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.primaryBg { background-color: var(--primary); }
+.secondaryBg { background-color: var(--secondary); }
+.dangerBg { background-color: var(--danger); }
+.infoBg { background-color: #0ea5e9; } /* Light blue */
+
+.statFooter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.trend {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.positive { color: var(--secondary); }
+.negative { color: var(--danger); }
+
+.trendLabel {
+  color: var(--text-muted);
+}
+
+.mainContent {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+  .mainContent {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.cardTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.iconBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.iconBtn:hover {
+  background: var(--bg-input);
+  color: var(--text-main);
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.activityDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dotPositive { background-color: var(--secondary); }
+.dotNegative { background-color: var(--warning); }
+
+.activityInfo {
+  flex: 1;
+}
+
+.activityTitle {
+  font-weight: 500;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  margin-bottom: 0.125rem;
+}
+
+.activityTime {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.activityAmount {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.textPositive { color: var(--secondary); }
+.textNegative { color: var(--text-main); }
+
+.actionGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
