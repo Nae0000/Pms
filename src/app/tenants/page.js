@@ -12,21 +12,21 @@ export default function TenantsPage() {
   return (
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
-        <h1 className="page-title">Tenant Management</h1>
+        <h1 className="page-title">การจัดการผู้เช่า (Tenant Management)</h1>
         <button className="btn btn-primary">
           <Plus size={20} />
-          Add New Tenant
+          เพิ่มผู้เช่าใหม่ (Add Tenant)
         </button>
       </div>
 
       <div className={`card glass ${styles.controls}`}>
         <div className={styles.searchBox}>
           <Search size={20} className={styles.searchIcon} />
-          <input type="text" placeholder="Search tenants by name, room, or phone..." className="input-field" style={{ paddingLeft: '2.5rem' }} />
+          <input type="text" placeholder="ค้นหาผู้เช่าด้วยชื่อ, ห้องพัก, หรือเบอร์โทร..." className="input-field" style={{ paddingLeft: '2.5rem' }} />
         </div>
         <button className="btn btn-outline">
           <Filter size={20} />
-          Filters
+          ตัวกรอง (Filters)
         </button>
       </div>
 
@@ -35,13 +35,13 @@ export default function TenantsPage() {
           <table className={styles.tenantTable}>
             <thead>
               <tr>
-                <th>Tenant Name</th>
-                <th>Room</th>
-                <th>Contact Info</th>
-                <th>Status</th>
-                <th>Contract End</th>
-                <th>Documents</th>
-                <th>Actions</th>
+                <th>ชื่อผู้เช่า (Tenant Name)</th>
+                <th>ห้อง (Room)</th>
+                <th>ข้อมูลติดต่อ (Contact Info)</th>
+                <th>สถานะ (Status)</th>
+                <th>สิ้นสุดสัญญา (Contract End)</th>
+                <th>เอกสาร (Documents)</th>
+                <th>จัดการ (Actions)</th>
               </tr>
             </thead>
             <tbody>

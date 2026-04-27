@@ -13,50 +13,50 @@ export default function FinancesPage() {
   return (
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
-        <h1 className="page-title">Financial Overview</h1>
+        <h1 className="page-title">ภาพรวมการเงิน (Financial Overview)</h1>
         <div style={{ display: 'flex', gap: '1rem' }}>
           <button className="btn btn-outline">
             <Download size={20} />
-            Export CSV
+            ส่งออก CSV (Export CSV)
           </button>
           <button className="btn btn-primary">
             <Plus size={20} />
-            Add Transaction
+            เพิ่มรายการ (Add Transaction)
           </button>
         </div>
       </div>
 
       <div className={styles.summaryCards}>
         <div className={`${styles.summaryCard} ${styles.incomeCard}`}>
-          <h3>Total Income (April)</h3>
+          <h3>รายรับทั้งหมด (Total Income - April)</h3>
           <p>+฿15,000</p>
         </div>
         <div className={`${styles.summaryCard} ${styles.expenseCard}`}>
-          <h3>Total Expenses (April)</h3>
+          <h3>รายจ่ายทั้งหมด (Total Expenses - April)</h3>
           <p>-฿2,050</p>
         </div>
         <div className={`${styles.summaryCard} ${styles.balanceCard}`}>
-          <h3>Net Balance</h3>
+          <h3>ยอดคงเหลือสุทธิ (Net Balance)</h3>
           <p>฿12,950</p>
         </div>
       </div>
 
       <div className="card glass" style={{ padding: 0 }}>
         <div className={styles.tabs} style={{ padding: '0 1.5rem', paddingTop: '1.5rem' }}>
-          <button className={`${styles.tab} ${styles.tabActive}`}>All Transactions</button>
-          <button className={styles.tab}>Income</button>
-          <button className={styles.tab}>Expenses</button>
+          <button className={`${styles.tab} ${styles.tabActive}`}>ธุรกรรมทั้งหมด (All)</button>
+          <button className={styles.tab}>รายรับ (Income)</button>
+          <button className={styles.tab}>รายจ่าย (Expenses)</button>
         </div>
 
         <div className={styles.tableContainer} style={{ padding: '0 1.5rem 1.5rem' }}>
           <table className={styles.financeTable}>
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Description</th>
-                <th>Category</th>
-                <th>Amount</th>
-                <th>Status</th>
+                <th>วันที่ (Date)</th>
+                <th>รายละเอียด (Description)</th>
+                <th>หมวดหมู่ (Category)</th>
+                <th>จำนวนเงิน (Amount)</th>
+                <th>สถานะ (Status)</th>
               </tr>
             </thead>
             <tbody>

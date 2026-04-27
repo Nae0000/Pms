@@ -24,7 +24,7 @@ export default function CalendarPage() {
       <div className={styles.calendarContainer}>
         {/* Toolbar */}
         <div className={styles.calendarToolbar}>
-          <h2>Booking Calendar (予約カレンダー)</h2>
+          <h2>ตารางการจอง (Booking Calendar)</h2>
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button className="btn btn-outline" style={{ padding: '0.25rem 0.5rem' }}>
               <ChevronLeft size={16} />
@@ -44,7 +44,7 @@ export default function CalendarPage() {
           {/* Left Panel (Rooms) */}
           <div className={styles.leftPanel}>
             <div className={styles.leftHeader}>
-              Room Name (物件名)
+              รายชื่อห้อง (Room Name)
             </div>
             <div className={styles.leftBody} ref={leftPanelBodyRef}>
               {rooms.map((room) => (
@@ -57,7 +57,7 @@ export default function CalendarPage() {
           <div className={styles.rightPanel} ref={rightPanelRef} onScroll={handleScroll}>
             <div className={styles.rightHeader}>
               <div className={styles.monthRow}>
-                <div className={styles.monthCell} style={{ width: `${50 * 31}px` }}>April 2026 (4月 2026)</div>
+                <div className={styles.monthCell} style={{ width: `${50 * 31}px` }}>เมษายน 2026 (April 2026)</div>
               </div>
               <div className={styles.dateRow}>
                 {dates.map((d) => (
@@ -74,19 +74,19 @@ export default function CalendarPage() {
                   {dates.map((d, colIndex) => (
                     <div key={colIndex} className={`${styles.gridCell} ${d % 7 === 0 || d % 7 === 6 ? styles.weekend : ''}`}>
                       {/* Show Vacant text on empty cells if the room is available globally */}
-                      {room.status === 'available' && <span className={styles.vacantText}>空室</span>}
+                      {room.status === 'available' && <span className={styles.vacantText}>ว่าง (Vacant)</span>}
                     </div>
                   ))}
                   
                   {/* Dynamic Bookings based on room status */}
                   {room.status === 'occupied' && (
                     <div className={`${styles.bookingBar} ${styles['status-occupied']}`} style={{ left: '100px', width: '400px' }}>
-                      Guest: {room.tenant}
+                      ผู้เช่า (Guest): {room.tenant}
                     </div>
                   )}
                   {room.status === 'maintenance' && (
                     <div className={`${styles.bookingBar} ${styles['status-maintenance']}`} style={{ left: '50px', width: '250px' }}>
-                      Maintenance
+                      ซ่อมบำรุง (Maintenance)
                     </div>
                   )}
                 </div>

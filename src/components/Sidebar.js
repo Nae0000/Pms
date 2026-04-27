@@ -13,11 +13,11 @@ import {
 import styles from "./Sidebar.module.css";
 
 const navItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Rooms", href: "/rooms", icon: Home },
-  { name: "Tenants", href: "/tenants", icon: Users },
-  { name: "Finances", href: "/finances", icon: Wallet },
-  { name: "Calendar", href: "/calendar", icon: CalendarDays },
+  { name: "หน้าหลัก (Dashboard)", href: "/", icon: LayoutDashboard },
+  { name: "ห้องพัก (Rooms)", href: "/rooms", icon: Home },
+  { name: "ผู้เช่า (Tenants)", href: "/tenants", icon: Users },
+  { name: "การเงิน (Finances)", href: "/finances", icon: Wallet },
+  { name: "ปฏิทิน (Calendar)", href: "/calendar", icon: CalendarDays },
 ];
 
 export default function Sidebar() {
@@ -54,8 +54,8 @@ export default function Sidebar() {
         <div className={styles.userProfile}>
           <div className={styles.avatar}>A</div>
           <div className={styles.userInfo}>
-            <span className={styles.userName}>Admin User</span>
-            <span className={styles.userRole}>Property Manager</span>
+            <span className={styles.userName}>แอดมิน (Admin User)</span>
+            <span className={styles.userRole}>ผู้ดูแลระบบ (Property Manager)</span>
           </div>
         </div>
       </div>

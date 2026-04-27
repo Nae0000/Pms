@@ -37,10 +37,10 @@ export default function RoomsPage() {
   return (
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
-        <h1 className="page-title">Room Management</h1>
+        <h1 className="page-title">การจัดการห้องพัก (Room Management)</h1>
         <button className="btn btn-primary" onClick={() => alert('Future Feature: Add Room Database Form')}>
           <Plus size={20} />
-          Add New Room
+          เพิ่มห้องใหม่ (Add Room)
         </button>
       </div>
 
@@ -49,14 +49,14 @@ export default function RoomsPage() {
           <Search size={20} className={styles.searchIcon} />
           <input 
             type="text" 
-            placeholder="Search by room number or tenant..." 
+            placeholder="ค้นหาชื่อห้องพัก หรือ ชื่อผู้เช่า..." 
             className="input-field" 
             style={{ paddingLeft: '2.5rem' }} 
           />
         </div>
         <button className="btn btn-outline">
           <Filter size={20} />
-          Filters
+          ตัวกรอง (Filters)
         </button>
       </div>
 
@@ -74,13 +74,13 @@ export default function RoomsPage() {
             </div>
             
             <div className={styles.roomDetails}>
-              <p><strong>Type:</strong> {room.type}</p>
-              <p><strong>Rent:</strong> ฿{room.price}/mo</p>
-              <p><strong>Tenant:</strong> {room.tenant}</p>
+              <p><strong>ประเภท (Type):</strong> {room.type}</p>
+              <p><strong>ค่าเช่า (Rent):</strong> ฿{room.price}/เดือน</p>
+              <p><strong>ผู้เช่า (Tenant):</strong> {room.tenant}</p>
             </div>
 
             <div className={styles.roomActions}>
-              <button className="btn btn-outline" style={{ flex: 1 }}>View Details</button>
+              <button className="btn btn-outline" style={{ flex: 1 }}>ดูรายละเอียด (Details)</button>
               <button className={styles.iconBtn} title="Edit Room" onClick={() => handleEditClick(room)}>
                 <Edit size={18} />
               </button>
@@ -94,7 +94,7 @@ export default function RoomsPage() {
         <div className="modal-overlay">
           <div className="modal-content glass" onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>Edit Room Details</h2>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>แก้ไขข้อมูลห้อง (Edit Room Details)</h2>
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 <X size={20} />
               </button>
@@ -136,7 +136,7 @@ export default function RoomsPage() {
                     className="input-field" 
                     value={tenant} 
                     onChange={(e) => setTenant(e.target.value)}
-                    placeholder="Enter tenant name"
+                    placeholder="ใส่ชื่อผู้เช่า (Enter tenant name)"
                     style={{ width: '100%' }}
                     required
                   />
@@ -144,8 +144,8 @@ export default function RoomsPage() {
               )}
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setIsModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>Save Changes</button>
+                <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setIsModalOpen(false)}>ยกเลิก (Cancel)</button>
+                <button type="submit" className="btn btn-primary" style={{ flex: 1 }}>บันทึก (Save Changes)</button>
               </div>
             </form>
           </div>

@@ -13,7 +13,7 @@ export default function Dashboard() {
   return (
     <div className="page-container animate-fade-in">
       <h1 className="page-title">
-        Dashboard Overview
+        ภาพรวมระบบ (Dashboard Overview)
       </h1>
 
       <div className={styles.statsGrid}>
@@ -21,7 +21,7 @@ export default function Dashboard() {
         <div className="card glass">
           <div className={styles.statHeader}>
             <div>
-              <p className={styles.statLabel}>Total Monthly Revenue</p>
+              <p className={styles.statLabel}>รายรับรายเดือน (Monthly Revenue)</p>
               <h2 className={styles.statValue}>฿125,000</h2>
             </div>
             <div className={`${styles.statIcon} ${styles.primaryBg}`}>
@@ -32,7 +32,7 @@ export default function Dashboard() {
             <span className={`${styles.trend} ${styles.positive}`}>
               <ArrowUpRight size={16} /> 12%
             </span>
-            <span className={styles.trendLabel}>vs last month</span>
+            <span className={styles.trendLabel}>เทียบกับเดือนที่แล้ว (vs last month)</span>
           </div>
         </div>
 
@@ -40,7 +40,7 @@ export default function Dashboard() {
         <div className="card glass">
           <div className={styles.statHeader}>
             <div>
-              <p className={styles.statLabel}>Occupied Rooms</p>
+              <p className={styles.statLabel}>ห้องที่มีผู้เช่า (Occupied Rooms)</p>
               <h2 className={styles.statValue}>42 / 50</h2>
             </div>
             <div className={`${styles.statIcon} ${styles.secondaryBg}`}>
@@ -48,7 +48,7 @@ export default function Dashboard() {
             </div>
           </div>
           <div className={styles.statFooter}>
-            <span className={styles.trendLabel}>84% Occupancy Rate</span>
+            <span className={styles.trendLabel}>อัตราการเข้าพัก 84% (Occupancy Rate)</span>
           </div>
         </div>
 
@@ -56,7 +56,7 @@ export default function Dashboard() {
         <div className="card glass">
           <div className={styles.statHeader}>
             <div>
-              <p className={styles.statLabel}>Total Tenants</p>
+              <p className={styles.statLabel}>ผู้เช่าทั้งหมด (Total Tenants)</p>
               <h2 className={styles.statValue}>56</h2>
             </div>
             <div className={`${styles.statIcon} ${styles.infoBg}`}>
@@ -67,7 +67,7 @@ export default function Dashboard() {
             <span className={`${styles.trend} ${styles.positive}`}>
               <ArrowUpRight size={16} /> 3
             </span>
-            <span className={styles.trendLabel}>new this month</span>
+            <span className={styles.trendLabel}>ผู้เช่าใหม่เดือนนี้ (new this month)</span>
           </div>
         </div>
 
@@ -75,7 +75,7 @@ export default function Dashboard() {
         <div className="card glass">
           <div className={styles.statHeader}>
             <div>
-              <p className={styles.statLabel}>Pending Payments</p>
+              <p className={styles.statLabel}>ยอดค้างชำระ (Pending Payments)</p>
               <h2 className={styles.statValue}>฿12,500</h2>
             </div>
             <div className={`${styles.statIcon} ${styles.dangerBg}`}>
@@ -86,7 +86,7 @@ export default function Dashboard() {
             <span className={`${styles.trend} ${styles.negative}`}>
               <ArrowDownRight size={16} /> 4
             </span>
-            <span className={styles.trendLabel}>rooms unpaid</span>
+            <span className={styles.trendLabel}>ห้องที่ยังไม่จ่าย (rooms unpaid)</span>
           </div>
         </div>
       </div>
@@ -95,16 +95,16 @@ export default function Dashboard() {
         {/* Recent Activity */}
         <div className={`card glass ${styles.recentActivity}`}>
           <div className={styles.cardHeader}>
-            <h3 className={styles.cardTitle}>Recent Activity</h3>
+            <h3 className={styles.cardTitle}>กิจกรรมล่าสุด (Recent Activity)</h3>
             <button className={styles.iconBtn}><MoreVertical size={20} /></button>
           </div>
           
           <div className={styles.activityList}>
             {[
-              { title: "Rent Paid: Room 101", time: "2 hours ago", amount: "+฿5,000", type: "income" },
-              { title: "Maintenance: AC Repair 204", time: "5 hours ago", amount: "-฿1,200", type: "expense" },
-              { title: "New Tenant: Room 305", time: "1 day ago", amount: "+฿10,000", type: "income" },
-              { title: "Water Bill Payment", time: "2 days ago", amount: "-฿3,450", type: "expense" },
+              { title: "ชำระค่าเช่า: ห้อง 101", time: "2 ชั่วโมงที่แล้ว", amount: "+฿5,000", type: "income" },
+              { title: "ซ่อมบำรุง: แอร์ห้อง 204", time: "5 ชั่วโมงที่แล้ว", amount: "-฿1,200", type: "expense" },
+              { title: "ผู้เช่าใหม่: ห้อง 305", time: "1 วันที่แล้ว", amount: "+฿10,000", type: "income" },
+              { title: "จ่ายบิลค่าน้ำประปา", time: "2 วันที่แล้ว", amount: "-฿3,450", type: "expense" },
             ].map((activity, i) => (
               <div key={i} className={styles.activityItem}>
                 <div className={`${styles.activityDot} ${activity.type === 'income' ? styles.dotPositive : styles.dotNegative}`}></div>
@@ -120,31 +120,31 @@ export default function Dashboard() {
           </div>
           
           <button className="btn btn-outline" style={{ width: '100%', marginTop: '1.5rem' }}>
-            View All Activity
+            ดูกิจกรรมทั้งหมด (View All Activity)
           </button>
         </div>
 
         {/* Quick Actions */}
         <div className={`card glass ${styles.quickActions}`}>
           <div className={styles.cardHeader}>
-            <h3 className={styles.cardTitle}>Quick Actions</h3>
+            <h3 className={styles.cardTitle}>เมนูลัด (Quick Actions)</h3>
           </div>
           <div className={styles.actionGrid}>
             <button className="btn btn-primary" style={{ padding: '1rem', flexDirection: 'column', gap: '0.75rem' }}>
               <HomeIcon size={24} />
-              <span>Add Room</span>
+              <span>เพิ่มห้อง (Add Room)</span>
             </button>
             <button className="btn btn-secondary" style={{ padding: '1rem', flexDirection: 'column', gap: '0.75rem' }}>
               <Users size={24} />
-              <span>Add Tenant</span>
+              <span>เพิ่มผู้เช่า (Add Tenant)</span>
             </button>
             <button className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.75rem' }}>
               <TrendingUp size={24} />
-              <span>Record Income</span>
+              <span>บันทึกรายรับ (Income)</span>
             </button>
             <button className="btn btn-outline" style={{ padding: '1rem', flexDirection: 'column', gap: '0.75rem' }}>
               <AlertCircle size={24} />
-              <span>Record Expense</span>
+              <span>บันทึกรายจ่าย (Expense)</span>
             </button>
           </div>
         </div>
