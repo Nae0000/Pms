@@ -10,6 +10,9 @@ export default function FinancesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState(null);
+  const [customCategories, setCustomCategories] = useState([]);
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
 
   const emptyForm = () => ({
     date: new Date().toISOString().split("T")[0],
@@ -27,7 +30,7 @@ export default function FinancesPage() {
   // ============ Dynamic Categories ============
   const defaultCategories = ["Rent", "Deposit", "Utilities", "Maintenance", "Insurance", "Other"];
   const usedCategories = [...new Set((transactions || []).map((t) => t.category).filter(Boolean))];
-  const allCategories = [...new Set([...defaultCategories, ...usedCategories])];
+  const allCategories = [...new Set([...defaultCategories, ...usedCategories, ...customCategories])];
 
   // ============ Filtering ============
   const filteredTx = (transactions || []).filter((t) => {
@@ -155,19 +158,41 @@ export default function FinancesPage() {
       <div style={{ display: "flex", gap: "1rem" }}>
         <div style={{ flex: 1 }}>
           <label style={LABEL}>หมวดหมู่ (Category)</label>
-          <input
-            list="category-list"
-            className="input-field"
-            value={form.category}
-            onChange={(e) => setField("category", e.target.value)}
-            placeholder="พิมพ์หรือเลือกหมวดหมู่"
-            style={W100}
-          />
-          <datalist id="category-list">
-            {allCategories.map((c, i) => (
-              <option key={i} value={c} />
-            ))}
-          </datalist>
+          {isAddingCategory ? (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                className="input-field"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                placeholder="พิมพ์หมวดหมู่ใหม่..."
+                style={{ flex: 1 }}
+                autoFocus
+              />
+              <button type="button" className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => {
+                if (newCategory.trim()) {
+                  setCustomCategories(prev => [...prev, newCategory.trim()]);
+                  setField('category', newCategory.trim());
+                  setNewCategory('');
+                  setIsAddingCategory(false);
+                }
+              }}>เพิ่ม</button>
+              <button type="button" className="btn btn-outline" style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }} onClick={() => { setIsAddingCategory(false); setNewCategory(''); }}>ยกเลิก</button>
+            </div>
+          ) : (
+            <select className="input-field" value={form.category} onChange={(e) => {
+              if (e.target.value === '__add_new__') {
+                setIsAddingCategory(true);
+              } else {
+                setField('category', e.target.value);
+              }
+            }} style={W100}>
+              {allCategories.map((c, i) => (
+                <option key={i} value={c}>{c}</option>
+              ))}
+              <option value="__add_new__">➕ เพิ่มหมวดหมู่ใหม่ (Add New)</option>
+            </select>
+          )}
         </div>
         <div style={{ flex: 1 }}>
           <label style={LABEL}>จำนวนเงิน (Amount) *</label>
