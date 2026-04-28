@@ -24,6 +24,11 @@ export default function FinancesPage() {
   const [form, setForm] = useState(emptyForm());
   const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
+  // ============ Dynamic Categories ============
+  const defaultCategories = ["Rent", "Deposit", "Utilities", "Maintenance", "Insurance", "Other"];
+  const usedCategories = [...new Set((transactions || []).map((t) => t.category).filter(Boolean))];
+  const allCategories = [...new Set([...defaultCategories, ...usedCategories])];
+
   // ============ Filtering ============
   const filteredTx = (transactions || []).filter((t) => {
     if (activeTab === "income") return t.type === "income";
@@ -150,14 +155,19 @@ export default function FinancesPage() {
       <div style={{ display: "flex", gap: "1rem" }}>
         <div style={{ flex: 1 }}>
           <label style={LABEL}>หมวดหมู่ (Category)</label>
-          <select className="input-field" value={form.category} onChange={(e) => setField("category", e.target.value)} style={W100}>
-            <option value="Rent">ค่าเช่า (Rent)</option>
-            <option value="Deposit">เงินมัดจำ (Deposit)</option>
-            <option value="Utilities">ค่าน้ำ/ไฟ (Utilities)</option>
-            <option value="Maintenance">ซ่อมบำรุง (Maintenance)</option>
-            <option value="Insurance">ประกันภัย (Insurance)</option>
-            <option value="Other">อื่นๆ (Other)</option>
-          </select>
+          <input
+            list="category-list"
+            className="input-field"
+            value={form.category}
+            onChange={(e) => setField("category", e.target.value)}
+            placeholder="พิมพ์หรือเลือกหมวดหมู่"
+            style={W100}
+          />
+          <datalist id="category-list">
+            {allCategories.map((c, i) => (
+              <option key={i} value={c} />
+            ))}
+          </datalist>
         </div>
         <div style={{ flex: 1 }}>
           <label style={LABEL}>จำนวนเงิน (Amount) *</label>
