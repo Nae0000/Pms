@@ -17,7 +17,7 @@ const emptyForm = () => ({
 });
 
 export default function TenantsPage() {
-  const { tenants, addTenant, updateTenant, deleteTenant, rooms, importFromGoogleSheets, importLoading } = useData();
+  const { tenants, addTenant, addMultipleTenants, updateTenant, deleteTenant, rooms, importFromGoogleSheets, importLoading } = useData();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -83,7 +83,9 @@ export default function TenantsPage() {
   };
 
   const handleImportSelected = () => {
-    selectedImports.forEach(idx => { if (importData[idx]) addTenant(importData[idx]); });
+    const toImport = [];
+    selectedImports.forEach(idx => { if (importData[idx]) toImport.push(importData[idx]); });
+    if (toImport.length > 0) addMultipleTenants(toImport);
     setIsImportModalOpen(false);
   };
 
