@@ -16,6 +16,7 @@ export default function FinancesPage() {
     description: "",
     category: "Rent",
     type: "income",
+    expense_type: "",
     amount: "",
     status: "Paid",
   });
@@ -27,6 +28,8 @@ export default function FinancesPage() {
   const filteredTx = (transactions || []).filter((t) => {
     if (activeTab === "income") return t.type === "income";
     if (activeTab === "expense") return t.type === "expense";
+    if (activeTab === "fixed") return t.type === "expense" && t.expense_type === "fixed";
+    if (activeTab === "variable") return t.type === "expense" && t.expense_type === "variable";
     return true;
   });
 
@@ -47,6 +50,14 @@ export default function FinancesPage() {
 
   const totalExpense = thisMonthTx
     .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + parseFloat(String(t.amount).replace(/,/g, "") || 0), 0);
+
+  const fixedExpense = thisMonthTx
+    .filter((t) => t.type === "expense" && t.expense_type === "fixed")
+    .reduce((sum, t) => sum + parseFloat(String(t.amount).replace(/,/g, "") || 0), 0);
+
+  const variableExpense = thisMonthTx
+    .filter((t) => t.type === "expense" && t.expense_type === "variable")
     .reduce((sum, t) => sum + parseFloat(String(t.amount).replace(/,/g, "") || 0), 0);
 
   const netBalance = totalIncome - totalExpense;
@@ -72,6 +83,7 @@ export default function FinancesPage() {
       description: tx.description || "",
       category: tx.category || "Rent",
       type: tx.type || "income",
+      expense_type: tx.expense_type || "",
       amount: String(tx.amount || ""),
       status: tx.status || "Paid",
     });
@@ -93,8 +105,8 @@ export default function FinancesPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ["Date", "Description", "Category", "Type", "Amount", "Status"];
-    const rows = (transactions || []).map((t) => [t.date, t.description, t.category, t.type, t.amount, t.status]);
+    const headers = ["Date", "Description", "Category", "Type", "Expense Type", "Amount", "Status"];
+    const rows = (transactions || []).map((t) => [t.date, t.description, t.category, t.type, t.expense_type || "-", t.amount, t.status]);
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -115,12 +127,22 @@ export default function FinancesPage() {
         </div>
         <div style={{ flex: 1 }}>
           <label style={LABEL}>ประเภท (Type) *</label>
-          <select className="input-field" value={form.type} onChange={(e) => setField("type", e.target.value)} style={W100}>
+          <select className="input-field" value={form.type} onChange={(e) => { setField("type", e.target.value); if (e.target.value === "income") setField("expense_type", ""); }} style={W100}>
             <option value="income">รายรับ (Income)</option>
             <option value="expense">รายจ่าย (Expense)</option>
           </select>
         </div>
       </div>
+      {form.type === "expense" && (
+        <div>
+          <label style={LABEL}>ประเภทรายจ่าย (Expense Type) *</label>
+          <select className="input-field" value={form.expense_type} onChange={(e) => setField("expense_type", e.target.value)} style={W100} required>
+            <option value="">-- เลือกประเภท --</option>
+            <option value="fixed">รายจ่ายคงที่ (Fixed)</option>
+            <option value="variable">รายจ่ายผันแปร (Variable)</option>
+          </select>
+        </div>
+      )}
       <div>
         <label style={LABEL}>รายละเอียด (Description) *</label>
         <input type="text" className="input-field" value={form.description} onChange={(e) => setField("description", e.target.value)} placeholder="e.g. Rent Payment - Room 101" style={W100} required />
@@ -190,6 +212,10 @@ export default function FinancesPage() {
         <div className={`${styles.summaryCard} ${styles.expenseCard}`}>
           <h3>รายจ่ายทั้งหมด (Total Expenses - {monthNames[currentMonth]})</h3>
           <p>-฿{formatNumber(totalExpense)}</p>
+          <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.25rem' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>คงที่: ฿{formatNumber(fixedExpense)}</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>ผันแปร: ฿{formatNumber(variableExpense)}</span>
+          </div>
         </div>
         <div className={`${styles.summaryCard} ${styles.balanceCard}`}>
           <h3>ยอดคงเหลือสุทธิ (Net Balance)</h3>
@@ -200,13 +226,19 @@ export default function FinancesPage() {
       <div className="card glass" style={{ padding: 0 }}>
         <div className={styles.tabs} style={{ padding: "0 1.5rem", paddingTop: "1.5rem" }}>
           <button className={`${styles.tab} ${activeTab === "all" ? styles.tabActive : ""}`} onClick={() => setActiveTab("all")}>
-            ธุรกรรมทั้งหมด (All)
+            ทั้งหมด (All)
           </button>
           <button className={`${styles.tab} ${activeTab === "income" ? styles.tabActive : ""}`} onClick={() => setActiveTab("income")}>
             รายรับ (Income)
           </button>
           <button className={`${styles.tab} ${activeTab === "expense" ? styles.tabActive : ""}`} onClick={() => setActiveTab("expense")}>
-            รายจ่าย (Expenses)
+            รายจ่ายทั้งหมด (All Expenses)
+          </button>
+          <button className={`${styles.tab} ${activeTab === "fixed" ? styles.tabActive : ""}`} onClick={() => setActiveTab("fixed")}>
+            คงที่ (Fixed)
+          </button>
+          <button className={`${styles.tab} ${activeTab === "variable" ? styles.tabActive : ""}`} onClick={() => setActiveTab("variable")}>
+            ผันแปร (Variable)
           </button>
         </div>
 
@@ -236,6 +268,11 @@ export default function FinancesPage() {
                     <td>{t.description}</td>
                     <td>
                       <span className="badge badge-neutral">{t.category}</span>
+                      {t.type === 'expense' && t.expense_type && (
+                        <span className={`badge ${t.expense_type === 'fixed' ? 'badge-info' : 'badge-warning'}`} style={{ marginLeft: '0.4rem', fontSize: '0.7rem' }}>
+                          {t.expense_type === 'fixed' ? 'คงที่' : 'ผันแปร'}
+                        </span>
+                      )}
                     </td>
                     <td className={t.type === "income" ? styles.amountIncome : styles.amountExpense}>
                       {t.type === "income" ? "+" : "-"}฿{parseFloat(String(t.amount).replace(/,/g, "") || 0).toLocaleString()}
