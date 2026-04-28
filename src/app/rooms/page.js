@@ -5,7 +5,8 @@ import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
 
 export default function RoomsPage() {
-  const { rooms, updateRoom, addRoom } = useData();
+  const { rooms, updateRoom, addRoom, tenants } = useData();
+  const activeTenants = (tenants || []).filter(t => t.status === 'Active');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -261,15 +262,18 @@ export default function RoomsPage() {
               {status === 'occupied' && (
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Tenant Name (ชื่อผู้เช่า)</label>
-                  <input 
-                    type="text" 
+                  <select 
                     className="input-field" 
                     value={tenant} 
                     onChange={(e) => setTenant(e.target.value)}
-                    placeholder="ใส่ชื่อผู้เช่า (Enter tenant name)"
                     style={{ width: '100%' }}
                     required
-                  />
+                  >
+                    <option value="">-- เลือกผู้เช่า (Select Tenant) --</option>
+                    {activeTenants.map((t, i) => (
+                      <option key={i} value={t.name}>{t.name}{t.nickname ? ` "${t.nickname}"` : ''} — ห้อง {t.room || '-'}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 
@@ -372,15 +376,18 @@ export default function RoomsPage() {
               {status === 'occupied' && (
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Tenant Name (ชื่อผู้เช่า)</label>
-                  <input 
-                    type="text" 
+                  <select 
                     className="input-field" 
                     value={tenant} 
                     onChange={(e) => setTenant(e.target.value)}
-                    placeholder="ใส่ชื่อผู้เช่า (Enter tenant name)"
                     style={{ width: '100%' }}
                     required
-                  />
+                  >
+                    <option value="">-- เลือกผู้เช่า (Select Tenant) --</option>
+                    {activeTenants.map((t, i) => (
+                      <option key={i} value={t.name}>{t.name}{t.nickname ? ` "${t.nickname}"` : ''} — ห้อง {t.room || '-'}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 
