@@ -13,6 +13,9 @@ export default function FinancesPage() {
   const [customCategories, setCustomCategories] = useState([]);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [isCategoryManageOpen, setIsCategoryManageOpen] = useState(false);
+  const [editCatIdx, setEditCatIdx] = useState(-1);
+  const [editCatValue, setEditCatValue] = useState("");
 
   const emptyForm = () => ({
     date: new Date().toISOString().split("T")[0],
@@ -180,18 +183,23 @@ export default function FinancesPage() {
               <button type="button" className="btn btn-outline" style={{ padding: '0.5rem 0.75rem', fontSize: '0.85rem' }} onClick={() => { setIsAddingCategory(false); setNewCategory(''); }}>ยกเลิก</button>
             </div>
           ) : (
-            <select className="input-field" value={form.category} onChange={(e) => {
-              if (e.target.value === '__add_new__') {
-                setIsAddingCategory(true);
-              } else {
-                setField('category', e.target.value);
-              }
-            }} style={W100}>
-              {allCategories.map((c, i) => (
-                <option key={i} value={c}>{c}</option>
-              ))}
-              <option value="__add_new__">➕ เพิ่มหมวดหมู่ใหม่ (Add New)</option>
-            </select>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <select className="input-field" value={form.category} onChange={(e) => {
+                if (e.target.value === '__add_new__') {
+                  setIsAddingCategory(true);
+                } else if (e.target.value === '__manage__') {
+                  setIsCategoryManageOpen(true);
+                } else {
+                  setField('category', e.target.value);
+                }
+              }} style={{ flex: 1 }}>
+                {allCategories.map((c, i) => (
+                  <option key={i} value={c}>{c}</option>
+                ))}
+                <option value="__add_new__">➕ เพิ่มหมวดหมู่ใหม่</option>
+                <option value="__manage__">✏️ จัดการหมวดหมู่</option>
+              </select>
+            </div>
           )}
         </div>
         <div style={{ flex: 1 }}>
@@ -379,6 +387,79 @@ export default function FinancesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Category Management Modal */}
+      {isCategoryManageOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content glass" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>จัดการหมวดหมู่ (Manage Categories)</h2>
+              <button onClick={() => { setIsCategoryManageOpen(false); setEditCatIdx(-1); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+                <X size={20} />
+              </button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {allCategories.map((cat, idx) => (
+                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 0.75rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}>
+                  {editCatIdx === idx ? (
+                    <>
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={editCatValue}
+                        onChange={(e) => setEditCatValue(e.target.value)}
+                        style={{ flex: 1, padding: '0.4rem 0.6rem' }}
+                        autoFocus
+                      />
+                      <button type="button" className="btn btn-primary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={() => {
+                        if (editCatValue.trim() && editCatValue.trim() !== cat) {
+                          const oldName = cat;
+                          const newName = editCatValue.trim();
+                          // Update in custom categories
+                          setCustomCategories(prev => prev.map(c => c === oldName ? newName : c));
+                          // Update all existing transactions with this category
+                          (transactions || []).forEach(t => {
+                            if (t.category === oldName) {
+                              updateTransaction(t.id, { category: newName });
+                            }
+                          });
+                          // Update form if currently selected
+                          if (form.category === oldName) setField('category', newName);
+                        }
+                        setEditCatIdx(-1);
+                      }}>บันทึก</button>
+                      <button type="button" className="btn btn-outline" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={() => setEditCatIdx(-1)}>ยกเลิก</button>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ flex: 1, fontSize: '0.9rem' }}>{cat}</span>
+                      <button type="button" className={styles.actionBtn} title="แก้ไข" onClick={() => { setEditCatIdx(idx); setEditCatValue(cat); }}>
+                        <Edit size={14} />
+                      </button>
+                      <button type="button" className={`${styles.actionBtn} ${styles.actionBtnDanger}`} title="ลบ" onClick={() => {
+                        if (confirm(`ลบหมวดหมู่ "${cat}" ? รายการที่ใช้หมวดหมู่นี้จะถูกเปลี่ยนเป็น "Other"`)) {
+                          setCustomCategories(prev => prev.filter(c => c !== cat));
+                          (transactions || []).forEach(t => {
+                            if (t.category === cat) {
+                              updateTransaction(t.id, { category: 'Other' });
+                            }
+                          });
+                          if (form.category === cat) setField('category', 'Other');
+                        }
+                      }}>
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="btn btn-primary" onClick={() => { setIsCategoryManageOpen(false); setEditCatIdx(-1); }}>เสร็จสิ้น (Done)</button>
+            </div>
           </div>
         </div>
       )}
