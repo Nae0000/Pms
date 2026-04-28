@@ -204,9 +204,11 @@
 
 /* Import Modal */
 .importList {
-  max-height: 400px;
+  flex: 1;
+  min-height: 200px;
   overflow-y: auto;
   margin: 1rem 0;
+  padding-right: 0.5rem;
 }
 
 .importItem {
