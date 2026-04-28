@@ -10,7 +10,7 @@ export default function FinancesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState(null);
-  const [customCategories, setCustomCategories] = useState([]);
+  const [categories, setCategories] = useState(["Rent", "Deposit", "Utilities", "Maintenance", "Insurance", "Other"]);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [isCategoryManageOpen, setIsCategoryManageOpen] = useState(false);
@@ -20,7 +20,7 @@ export default function FinancesPage() {
   const emptyForm = () => ({
     date: new Date().toISOString().split("T")[0],
     description: "",
-    category: "Rent",
+    category: categories[0] || "Other",
     type: "income",
     expense_type: "",
     amount: "",
@@ -31,9 +31,8 @@ export default function FinancesPage() {
   const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }));
 
   // ============ Dynamic Categories ============
-  const defaultCategories = ["Rent", "Deposit", "Utilities", "Maintenance", "Insurance", "Other"];
   const usedCategories = [...new Set((transactions || []).map((t) => t.category).filter(Boolean))];
-  const allCategories = [...new Set([...defaultCategories, ...usedCategories, ...customCategories])];
+  const allCategories = [...new Set([...categories, ...usedCategories])];
 
   // ============ Filtering ============
   const filteredTx = (transactions || []).filter((t) => {
@@ -174,7 +173,7 @@ export default function FinancesPage() {
               />
               <button type="button" className="btn btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }} onClick={() => {
                 if (newCategory.trim()) {
-                  setCustomCategories(prev => [...prev, newCategory.trim()]);
+                  setCategories(prev => [...prev, newCategory.trim()]);
                   setField('category', newCategory.trim());
                   setNewCategory('');
                   setIsAddingCategory(false);
@@ -418,8 +417,8 @@ export default function FinancesPage() {
                         if (editCatValue.trim() && editCatValue.trim() !== cat) {
                           const oldName = cat;
                           const newName = editCatValue.trim();
-                          // Update in custom categories
-                          setCustomCategories(prev => prev.map(c => c === oldName ? newName : c));
+                          // Update in categories list
+                          setCategories(prev => prev.map(c => c === oldName ? newName : c));
                           // Update all existing transactions with this category
                           (transactions || []).forEach(t => {
                             if (t.category === oldName) {
@@ -441,7 +440,7 @@ export default function FinancesPage() {
                       </button>
                       <button type="button" className={`${styles.actionBtn} ${styles.actionBtnDanger}`} title="ลบ" onClick={() => {
                         if (confirm(`ลบหมวดหมู่ "${cat}" ? รายการที่ใช้หมวดหมู่นี้จะถูกเปลี่ยนเป็น "Other"`)) {
-                          setCustomCategories(prev => prev.filter(c => c !== cat));
+                          setCategories(prev => prev.filter(c => c !== cat));
                           (transactions || []).forEach(t => {
                             if (t.category === cat) {
                               updateTransaction(t.id, { category: 'Other' });
