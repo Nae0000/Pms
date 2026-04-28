@@ -97,40 +97,32 @@ export const DataProvider = ({ children }) => {
   const [rooms, setRooms] = useState([]);
   const [tenants, setTenants] = useState([]);
   const [importLoading, setImportLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
+    setIsInitialLoading(true);
+    
     // 1. Fetch Rooms
     const { data: roomsData, error: roomsError } = await supabase.from('rooms').select('*');
     if (roomsError) {
       console.error("Error fetching rooms:", roomsError);
-    } else {
-      if (roomsData && roomsData.length > 0) {
-        setRooms(roomsData);
-      } else {
-        // Seed default rooms if empty
-        const { data: newRooms, error: insertError } = await supabase.from('rooms').insert(DEFAULT_ROOMS).select();
-        if (!insertError && newRooms) setRooms(newRooms);
-      }
+    } else if (roomsData) {
+      setRooms(roomsData);
     }
 
     // 2. Fetch Tenants
     const { data: tenantsData, error: tenantsError } = await supabase.from('tenants').select('*');
     if (tenantsError) {
       console.error("Error fetching tenants:", tenantsError);
-    } else {
-      if (tenantsData && tenantsData.length > 0) {
-        setTenants(tenantsData.map(mapTenantFromDB));
-      } else {
-        // Seed default tenants if empty
-        const dbTenants = DEFAULT_TENANTS.map(mapTenantToDB);
-        const { data: newTenants, error: insertError } = await supabase.from('tenants').insert(dbTenants).select();
-        if (!insertError && newTenants) setTenants(newTenants.map(mapTenantFromDB));
-      }
+    } else if (tenantsData) {
+      setTenants(tenantsData.map(mapTenantFromDB));
     }
+    
+    setIsInitialLoading(false);
   };
 
   const updateRoom = async (id, updatedData) => {
@@ -242,7 +234,7 @@ export const DataProvider = ({ children }) => {
     <DataContext.Provider value={{ 
       rooms, setRooms, updateRoom, addRoom,
       tenants, setTenants, updateTenant, addTenant, addMultipleTenants, deleteTenant,
-      importFromGoogleSheets, importLoading
+      importFromGoogleSheets, importLoading, isInitialLoading
     }}>
       {children}
     </DataContext.Provider>

@@ -17,7 +17,7 @@ const emptyForm = () => ({
 });
 
 export default function TenantsPage() {
-  const { tenants, addTenant, addMultipleTenants, updateTenant, deleteTenant, rooms, importFromGoogleSheets, importLoading } = useData();
+  const { tenants, addTenant, addMultipleTenants, updateTenant, deleteTenant, rooms, importFromGoogleSheets, importLoading, isInitialLoading } = useData();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -258,7 +258,9 @@ export default function TenantsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredTenants.length > 0 ? filteredTenants.map(t => (
+              {isInitialLoading ? (
+                <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>กำลังโหลดข้อมูล (Loading...)</td></tr>
+              ) : filteredTenants.length > 0 ? filteredTenants.map(t => (
                 <tr key={t.id} onClick={() => handleViewClick(t)}>
                   <td>
                     <div className={styles.tenantInfo}>
