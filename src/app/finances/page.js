@@ -1,25 +1,181 @@
-import { Plus, Download, ArrowUpRight, ArrowDownRight } from "lucide-react";
+"use client";
+import { useState } from "react";
+import { Plus, Download, X, Edit, Trash2 } from "lucide-react";
 import styles from "./page.module.css";
+import { useData } from "../context/DataContext";
 
 export default function FinancesPage() {
-  const transactions = [
-    { id: 1, date: "2026-04-01", description: "Rent Payment - Room 101", category: "Rent", type: "income", amount: "5,000", status: "Paid" },
-    { id: 2, date: "2026-04-02", description: "Deposit - Room 104", category: "Deposit", type: "income", amount: "10,000", status: "Paid" },
-    { id: 3, date: "2026-04-05", description: "Water Bill (PEA)", category: "Utilities", type: "expense", amount: "1,250", status: "Paid" },
-    { id: 4, date: "2026-04-10", description: "AC Maintenance - Room 201", category: "Maintenance", type: "expense", amount: "800", status: "Paid" },
-    { id: 5, date: "2026-04-12", description: "Rent Payment - Room 104", category: "Rent", type: "income", amount: "5,000", status: "Pending" },
-  ];
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, isInitialLoading } = useData();
+  const [activeTab, setActiveTab] = useState("all");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTx, setEditingTx] = useState(null);
+
+  const emptyForm = () => ({
+    date: new Date().toISOString().split("T")[0],
+    description: "",
+    category: "Rent",
+    type: "income",
+    amount: "",
+    status: "Paid",
+  });
+
+  const [form, setForm] = useState(emptyForm());
+  const setField = (key, val) => setForm((f) => ({ ...f, [key]: val }));
+
+  // ============ Filtering ============
+  const filteredTx = (transactions || []).filter((t) => {
+    if (activeTab === "income") return t.type === "income";
+    if (activeTab === "expense") return t.type === "expense";
+    return true;
+  });
+
+  // ============ Summary ============
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  const thisMonthTx = (transactions || []).filter((t) => {
+    const d = new Date(t.date);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  });
+
+  const totalIncome = thisMonthTx
+    .filter((t) => t.type === "income")
+    .reduce((sum, t) => sum + parseFloat(String(t.amount).replace(/,/g, "") || 0), 0);
+
+  const totalExpense = thisMonthTx
+    .filter((t) => t.type === "expense")
+    .reduce((sum, t) => sum + parseFloat(String(t.amount).replace(/,/g, "") || 0), 0);
+
+  const netBalance = totalIncome - totalExpense;
+
+  const formatNumber = (n) => n.toLocaleString("en-US", { minimumFractionDigits: 0 });
+
+  // ============ Handlers ============
+  const handleAddClick = () => {
+    setForm(emptyForm());
+    setIsAddModalOpen(true);
+  };
+
+  const handleSaveAdd = (e) => {
+    e.preventDefault();
+    addTransaction({ ...form, amount: form.amount.replace(/,/g, "") });
+    setIsAddModalOpen(false);
+  };
+
+  const handleEditClick = (tx) => {
+    setEditingTx(tx);
+    setForm({
+      date: tx.date || "",
+      description: tx.description || "",
+      category: tx.category || "Rent",
+      type: tx.type || "income",
+      amount: String(tx.amount || ""),
+      status: tx.status || "Paid",
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = (e) => {
+    e.preventDefault();
+    if (editingTx) {
+      updateTransaction(editingTx.id, { ...form, amount: form.amount.replace(/,/g, "") });
+      setIsEditModalOpen(false);
+    }
+  };
+
+  const handleDelete = (id) => {
+    if (confirm("คุณต้องการลบรายการนี้? (Delete this transaction?)")) {
+      deleteTransaction(id);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const headers = ["Date", "Description", "Category", "Type", "Amount", "Status"];
+    const rows = (transactions || []).map((t) => [t.date, t.description, t.category, t.type, t.amount, t.status]);
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `finances_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ============ Form Render ============
+  const renderFormFields = () => (
+    <>
+      <div style={{ display: "flex", gap: "1rem" }}>
+        <div style={{ flex: 1 }}>
+          <label style={LABEL}>วันที่ (Date) *</label>
+          <input type="date" className="input-field" value={form.date} onChange={(e) => setField("date", e.target.value)} style={W100} required />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label style={LABEL}>ประเภท (Type) *</label>
+          <select className="input-field" value={form.type} onChange={(e) => setField("type", e.target.value)} style={W100}>
+            <option value="income">รายรับ (Income)</option>
+            <option value="expense">รายจ่าย (Expense)</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label style={LABEL}>รายละเอียด (Description) *</label>
+        <input type="text" className="input-field" value={form.description} onChange={(e) => setField("description", e.target.value)} placeholder="e.g. Rent Payment - Room 101" style={W100} required />
+      </div>
+      <div style={{ display: "flex", gap: "1rem" }}>
+        <div style={{ flex: 1 }}>
+          <label style={LABEL}>หมวดหมู่ (Category)</label>
+          <select className="input-field" value={form.category} onChange={(e) => setField("category", e.target.value)} style={W100}>
+            <option value="Rent">ค่าเช่า (Rent)</option>
+            <option value="Deposit">เงินมัดจำ (Deposit)</option>
+            <option value="Utilities">ค่าน้ำ/ไฟ (Utilities)</option>
+            <option value="Maintenance">ซ่อมบำรุง (Maintenance)</option>
+            <option value="Insurance">ประกันภัย (Insurance)</option>
+            <option value="Other">อื่นๆ (Other)</option>
+          </select>
+        </div>
+        <div style={{ flex: 1 }}>
+          <label style={LABEL}>จำนวนเงิน (Amount) *</label>
+          <input type="text" className="input-field" value={form.amount} onChange={(e) => setField("amount", e.target.value)} placeholder="e.g. 5000" style={W100} required />
+        </div>
+      </div>
+      <div>
+        <label style={LABEL}>สถานะ (Status)</label>
+        <select className="input-field" value={form.status} onChange={(e) => setField("status", e.target.value)} style={W100}>
+          <option value="Paid">ชำระแล้ว (Paid)</option>
+          <option value="Pending">รอชำระ (Pending)</option>
+          <option value="Overdue">เลยกำหนด (Overdue)</option>
+        </select>
+      </div>
+    </>
+  );
+
+  const LABEL = { display: "block", marginBottom: "0.5rem", fontSize: "0.875rem", color: "var(--text-muted)", fontWeight: 500 };
+  const W100 = { width: "100%" };
+  const BTNS = { display: "flex", gap: "1rem", marginTop: "1rem" };
+  const FLEX1 = { flex: 1 };
+
+  if (isInitialLoading) {
+    return (
+      <div className="page-container animate-fade-in" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "1.1rem" }}>กำลังโหลดข้อมูล (Loading...)...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
         <h1 className="page-title">ภาพรวมการเงิน (Financial Overview)</h1>
-        <div style={{ display: 'flex', gap: '1rem' }}>
-          <button className="btn btn-outline">
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <button className="btn btn-outline" onClick={handleExportCSV}>
             <Download size={20} />
             ส่งออก CSV (Export CSV)
           </button>
-          <button className="btn btn-primary">
+          <button className="btn btn-primary" onClick={handleAddClick}>
             <Plus size={20} />
             เพิ่มรายการ (Add Transaction)
           </button>
@@ -28,27 +184,33 @@ export default function FinancesPage() {
 
       <div className={styles.summaryCards}>
         <div className={`${styles.summaryCard} ${styles.incomeCard}`}>
-          <h3>รายรับทั้งหมด (Total Income - April)</h3>
-          <p>+฿15,000</p>
+          <h3>รายรับทั้งหมด (Total Income - {monthNames[currentMonth]})</h3>
+          <p>+฿{formatNumber(totalIncome)}</p>
         </div>
         <div className={`${styles.summaryCard} ${styles.expenseCard}`}>
-          <h3>รายจ่ายทั้งหมด (Total Expenses - April)</h3>
-          <p>-฿2,050</p>
+          <h3>รายจ่ายทั้งหมด (Total Expenses - {monthNames[currentMonth]})</h3>
+          <p>-฿{formatNumber(totalExpense)}</p>
         </div>
         <div className={`${styles.summaryCard} ${styles.balanceCard}`}>
           <h3>ยอดคงเหลือสุทธิ (Net Balance)</h3>
-          <p>฿12,950</p>
+          <p style={{ color: netBalance >= 0 ? "var(--secondary)" : "var(--danger)" }}>฿{formatNumber(netBalance)}</p>
         </div>
       </div>
 
       <div className="card glass" style={{ padding: 0 }}>
-        <div className={styles.tabs} style={{ padding: '0 1.5rem', paddingTop: '1.5rem' }}>
-          <button className={`${styles.tab} ${styles.tabActive}`}>ธุรกรรมทั้งหมด (All)</button>
-          <button className={styles.tab}>รายรับ (Income)</button>
-          <button className={styles.tab}>รายจ่าย (Expenses)</button>
+        <div className={styles.tabs} style={{ padding: "0 1.5rem", paddingTop: "1.5rem" }}>
+          <button className={`${styles.tab} ${activeTab === "all" ? styles.tabActive : ""}`} onClick={() => setActiveTab("all")}>
+            ธุรกรรมทั้งหมด (All)
+          </button>
+          <button className={`${styles.tab} ${activeTab === "income" ? styles.tabActive : ""}`} onClick={() => setActiveTab("income")}>
+            รายรับ (Income)
+          </button>
+          <button className={`${styles.tab} ${activeTab === "expense" ? styles.tabActive : ""}`} onClick={() => setActiveTab("expense")}>
+            รายจ่าย (Expenses)
+          </button>
         </div>
 
-        <div className={styles.tableContainer} style={{ padding: '0 1.5rem 1.5rem' }}>
+        <div className={styles.tableContainer} style={{ padding: "0 1.5rem 1.5rem" }}>
           <table className={styles.financeTable}>
             <thead>
               <tr>
@@ -57,28 +219,97 @@ export default function FinancesPage() {
                 <th>หมวดหมู่ (Category)</th>
                 <th>จำนวนเงิน (Amount)</th>
                 <th>สถานะ (Status)</th>
+                <th>จัดการ (Actions)</th>
               </tr>
             </thead>
             <tbody>
-              {transactions.map((t) => (
-                <tr key={t.id}>
-                  <td>{t.date}</td>
-                  <td>{t.description}</td>
-                  <td><span className="badge badge-neutral">{t.category}</span></td>
-                  <td className={t.type === 'income' ? styles.amountIncome : styles.amountExpense}>
-                    {t.type === 'income' ? '+' : '-'}฿{t.amount}
-                  </td>
-                  <td>
-                    <span className={`badge ${t.status === 'Paid' ? 'badge-success' : 'badge-warning'}`}>
-                      {t.status}
-                    </span>
+              {filteredTx.length === 0 ? (
+                <tr>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                    ไม่พบรายการ (No transactions found)
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredTx.map((t) => (
+                  <tr key={t.id}>
+                    <td>{t.date}</td>
+                    <td>{t.description}</td>
+                    <td>
+                      <span className="badge badge-neutral">{t.category}</span>
+                    </td>
+                    <td className={t.type === "income" ? styles.amountIncome : styles.amountExpense}>
+                      {t.type === "income" ? "+" : "-"}฿{parseFloat(String(t.amount).replace(/,/g, "") || 0).toLocaleString()}
+                    </td>
+                    <td>
+                      <span className={`badge ${t.status === "Paid" ? "badge-success" : t.status === "Overdue" ? "badge-danger" : "badge-warning"}`}>{t.status}</span>
+                    </td>
+                    <td>
+                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                        <button className={styles.actionBtn} title="แก้ไข (Edit)" onClick={() => handleEditClick(t)}>
+                          <Edit size={16} />
+                        </button>
+                        <button className={`${styles.actionBtn} ${styles.actionBtnDanger}`} title="ลบ (Delete)" onClick={() => handleDelete(t.id)}>
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Add Modal */}
+      {isAddModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content glass" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>เพิ่มรายการ (Add Transaction)</h2>
+              <button onClick={() => setIsAddModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveAdd} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {renderFormFields()}
+              <div style={BTNS}>
+                <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsAddModalOpen(false)}>
+                  ยกเลิก (Cancel)
+                </button>
+                <button type="submit" className="btn btn-primary" style={FLEX1}>
+                  เพิ่มรายการ (Add)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content glass" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>แก้ไขรายการ (Edit Transaction)</h2>
+              <button onClick={() => setIsEditModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleSaveEdit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+              {renderFormFields()}
+              <div style={BTNS}>
+                <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsEditModalOpen(false)}>
+                  ยกเลิก (Cancel)
+                </button>
+                <button type="submit" className="btn btn-primary" style={FLEX1}>
+                  บันทึก (Save)
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -96,6 +96,7 @@ function mapTenantToDB(t) {
 export const DataProvider = ({ children }) => {
   const [rooms, setRooms] = useState([]);
   const [tenants, setTenants] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [importLoading, setImportLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
@@ -120,6 +121,14 @@ export const DataProvider = ({ children }) => {
       console.error("Error fetching tenants:", tenantsError);
     } else if (tenantsData) {
       setTenants(tenantsData.map(mapTenantFromDB));
+    }
+
+    // 3. Fetch Transactions
+    const { data: txData, error: txError } = await supabase.from('transactions').select('*').order('date', { ascending: false });
+    if (txError) {
+      console.error("Error fetching transactions:", txError);
+    } else if (txData) {
+      setTransactions(txData);
     }
     
     setIsInitialLoading(false);
@@ -230,10 +239,33 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  // ============ Transaction CRUD ============
+  const addTransaction = async (txData) => {
+    const { data, error } = await supabase.from('transactions').insert([txData]).select();
+    if (error) {
+      console.error("Error adding transaction:", error);
+    } else if (data) {
+      setTransactions(prev => [data[0], ...prev]);
+    }
+  };
+
+  const updateTransaction = async (id, updatedData) => {
+    setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
+    const { error } = await supabase.from('transactions').update(updatedData).eq('id', id);
+    if (error) console.error("Error updating transaction:", error);
+  };
+
+  const deleteTransaction = async (id) => {
+    setTransactions(prev => prev.filter(t => t.id !== id));
+    const { error } = await supabase.from('transactions').delete().eq('id', id);
+    if (error) console.error("Error deleting transaction:", error);
+  };
+
   return (
     <DataContext.Provider value={{ 
       rooms, setRooms, updateRoom, addRoom,
       tenants, setTenants, updateTenant, addTenant, addMultipleTenants, deleteTenant,
+      transactions, addTransaction, updateTransaction, deleteTransaction,
       importFromGoogleSheets, importLoading, isInitialLoading
     }}>
       {children}
