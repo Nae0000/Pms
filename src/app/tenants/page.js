@@ -309,8 +309,10 @@ export default function TenantsPage() {
               <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>เพิ่มผู้เช่าใหม่ (Add New Tenant)</h2>
               <button onClick={() => setIsAddModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
             </div>
-            <form onSubmit={handleSaveAdd} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {renderFormFields()}
+            <form onSubmit={handleSaveAdd} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              <div style={{ flex: '1 1 auto', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {renderFormFields()}
+              </div>
               <div style={BTNS}>
                 <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsAddModalOpen(false)}>ยกเลิก</button>
                 <button type="submit" className="btn btn-primary" style={FLEX1}>เพิ่มผู้เช่า</button>
@@ -328,8 +330,10 @@ export default function TenantsPage() {
               <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>แก้ไขข้อมูลผู้เช่า (Edit Tenant)</h2>
               <button onClick={() => setIsEditModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
             </div>
-            <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {renderFormFields()}
+            <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+              <div style={{ flex: '1 1 auto', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {renderFormFields()}
+              </div>
               <div style={BTNS}>
                 <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsEditModalOpen(false)}>ยกเลิก</button>
                 <button type="submit" className="btn btn-primary" style={FLEX1}>บันทึก (Save)</button>
@@ -353,20 +357,22 @@ export default function TenantsPage() {
               </div>
               <button onClick={() => setIsDetailModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
             </div>
-            <div className={styles.detailGrid}>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>ห้อง</span><span className={styles.detailValue}>{viewingTenant.room || '-'}</span></div>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>สถานะ</span><span className={styles.detailValue}><span className={`badge ${viewingTenant.status === 'Active' ? 'badge-success' : 'badge-neutral'}`}>{viewingTenant.status}</span></span></div>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>เพศ</span><span className={styles.detailValue}>{viewingTenant.gender || '-'}</span></div>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>อายุ</span><span className={styles.detailValue}>{viewingTenant.age || '-'}</span></div>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>วันเกิด</span><span className={styles.detailValue}>{viewingTenant.dob || '-'}</span></div>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>จังหวัด</span><span className={styles.detailValue}>{viewingTenant.province || '-'}</span></div>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>โทรศัพท์</span><span className={styles.detailValue}>{viewingTenant.phone || '-'}</span></div>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>อีเมล</span><span className={styles.detailValue}>{viewingTenant.email || '-'}</span></div>
-              <div className={`${styles.detailItem} ${styles.detailFull}`}><span className={styles.detailLabel}>ช่องทางติดต่ออื่น</span><span className={styles.detailValue}>{viewingTenant.socialContact || '-'}</span></div>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>อาชีพ</span><span className={styles.detailValue}>{viewingTenant.occupation || '-'}</span></div>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>รายได้</span><span className={styles.detailValue}>{viewingTenant.income || '-'}</span></div>
-              <div className={`${styles.detailItem} ${styles.detailFull}`}><span className={styles.detailLabel}>สถานที่ทำงาน</span><span className={styles.detailValue}>{viewingTenant.workplace || '-'}</span></div>
-              <div className={styles.detailItem}><span className={styles.detailLabel}>สิ้นสุดสัญญา</span><span className={styles.detailValue}>{viewingTenant.contractEnd || '-'}</span></div>
+            <div style={{ flex: '1 1 auto', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1rem' }}>
+              <div className={styles.detailGrid}>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>ห้อง</span><span className={styles.detailValue}>{viewingTenant.room || '-'}</span></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>สถานะ</span><span className={styles.detailValue}><span className={`badge ${viewingTenant.status === 'Active' ? 'badge-success' : 'badge-neutral'}`}>{viewingTenant.status}</span></span></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>เพศ</span><span className={styles.detailValue}>{viewingTenant.gender || '-'}</span></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>อายุ</span><span className={styles.detailValue}>{viewingTenant.age || '-'}</span></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>วันเกิด</span><span className={styles.detailValue}>{viewingTenant.dob || '-'}</span></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>จังหวัด</span><span className={styles.detailValue}>{viewingTenant.province || '-'}</span></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>โทรศัพท์</span><span className={styles.detailValue}>{viewingTenant.phone || '-'}</span></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>อีเมล</span><span className={styles.detailValue}>{viewingTenant.email || '-'}</span></div>
+                <div className={`${styles.detailItem} ${styles.detailFull}`}><span className={styles.detailLabel}>ช่องทางติดต่ออื่น</span><span className={styles.detailValue}>{viewingTenant.socialContact || '-'}</span></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>อาชีพ</span><span className={styles.detailValue}>{viewingTenant.occupation || '-'}</span></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>รายได้</span><span className={styles.detailValue}>{viewingTenant.income || '-'}</span></div>
+                <div className={`${styles.detailItem} ${styles.detailFull}`}><span className={styles.detailLabel}>สถานที่ทำงาน</span><span className={styles.detailValue}>{viewingTenant.workplace || '-'}</span></div>
+                <div className={styles.detailItem}><span className={styles.detailLabel}>สิ้นสุดสัญญา</span><span className={styles.detailValue}>{viewingTenant.contractEnd || '-'}</span></div>
+              </div>
             </div>
             <div style={BTNS}>
               <button className="btn btn-outline" style={FLEX1} onClick={() => { setIsDetailModalOpen(false); handleEditClick(viewingTenant); }}>
