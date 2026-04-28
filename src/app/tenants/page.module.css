@@ -204,8 +204,8 @@
 
 /* Import Modal */
 .importList {
-  flex: 1;
-  min-height: 200px;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   margin: 1rem 0;
   padding-right: 0.5rem;
