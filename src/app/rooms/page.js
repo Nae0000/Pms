@@ -136,6 +136,7 @@ export default function RoomsPage() {
           >
             <option value="all">ทั้งหมด (All)</option>
             <option value="available">ว่าง (Available)</option>
+            <option value="reserved">จอง (Reserved)</option>
             <option value="occupied">มีผู้เช่า (Occupied)</option>
             <option value="maintenance">ซ่อมบำรุง (Maintenance)</option>
           </select>
@@ -170,9 +171,10 @@ export default function RoomsPage() {
                 <h2>{room.name || `Room ${room.id}`}</h2>
                 <span className={`badge ${
                   room.status === 'available' ? 'badge-success' : 
+                  room.status === 'reserved' ? 'badge-info' :
                   room.status === 'occupied' ? 'badge-danger' : 'badge-warning'
                 }`}>
-                  {room.status.toUpperCase()}
+                  {room.status === 'reserved' ? 'RESERVED' : room.status.toUpperCase()}
                 </span>
               </div>
               
@@ -229,9 +231,10 @@ export default function RoomsPage() {
                       <td>
                         <span className={`badge ${
                           room.status === 'available' ? 'badge-success' : 
+                          room.status === 'reserved' ? 'badge-info' :
                           room.status === 'occupied' ? 'badge-danger' : 'badge-warning'
                         }`}>
-                          {room.status.toUpperCase()}
+                          {room.status === 'reserved' ? 'RESERVED' : room.status.toUpperCase()}
                         </span>
                       </td>
                       <td>{room.type}</td>
@@ -338,6 +341,7 @@ export default function RoomsPage() {
                   style={{ width: '100%' }}
                 >
                   <option value="available">Available (ว่าง)</option>
+                  <option value="reserved">Reserved (จอง)</option>
                   <option value="occupied">Occupied (มีผู้เช่า)</option>
                   <option value="maintenance">Maintenance (ซ่อมบำรุง)</option>
                 </select>
@@ -452,6 +456,7 @@ export default function RoomsPage() {
                   style={{ width: '100%' }}
                 >
                   <option value="available">Available (ว่าง)</option>
+                  <option value="reserved">Reserved (จอง)</option>
                   <option value="occupied">Occupied (มีผู้เช่า)</option>
                   <option value="maintenance">Maintenance (ซ่อมบำรุง)</option>
                 </select>
