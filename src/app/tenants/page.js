@@ -91,9 +91,11 @@ export default function TenantsPage() {
 
   const mappedTenants = (tenants || []).map(t => {
     const linkedRoom = (rooms || []).find(r => r.tenant === t.name);
+    // If not actively linked to a room, fall back to what's stored in the DB (for history)
+    const fallbackRoom = t.room && t.room !== "-" ? t.room : "-";
     return {
       ...t,
-      computedRoom: linkedRoom ? (linkedRoom.name || linkedRoom.id) : "-",
+      computedRoom: linkedRoom ? (linkedRoom.name || linkedRoom.id) : fallbackRoom,
       computedStatus: linkedRoom ? "Active" : "Inactive"
     };
   });
