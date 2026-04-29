@@ -39,10 +39,10 @@ export default function TenantsPage() {
     setEditingTenant(tenant);
     setForm({
       name: tenant.name || "", nickname: tenant.nickname || "", dob: tenant.dob || "",
-      age: tenant.age || "", gender: tenant.gender || "", room: tenant.room || "",
+      age: tenant.age || "", gender: tenant.gender || "", room: tenant.computedRoom || "",
       phone: tenant.phone || "", email: tenant.email === "-" ? "" : (tenant.email || ""),
       socialContact: tenant.socialContact || "", occupation: tenant.occupation || "",
-      workplace: tenant.workplace || "", status: tenant.status || "Active",
+      workplace: tenant.workplace || "", status: tenant.computedStatus || "Active",
       contractEnd: tenant.contractEnd || "", income: tenant.income || "", province: tenant.province || ""
     });
     setIsEditModalOpen(true);
@@ -89,11 +89,20 @@ export default function TenantsPage() {
     setIsImportModalOpen(false);
   };
 
-  const filteredTenants = tenants.filter(t => {
+  const mappedTenants = (tenants || []).map(t => {
+    const linkedRoom = (rooms || []).find(r => r.tenant === t.name);
+    return {
+      ...t,
+      computedRoom: linkedRoom ? (linkedRoom.name || linkedRoom.id) : "-",
+      computedStatus: linkedRoom ? "Active" : "Inactive"
+    };
+  });
+
+  const filteredTenants = mappedTenants.filter(t => {
     const q = searchQuery.toLowerCase();
     const searchMatch = (t.name || "").toLowerCase().includes(q) || (t.phone || "").includes(q) ||
-      (t.room || "").toLowerCase().includes(q) || (t.nickname || "").toLowerCase().includes(q);
-    const statusMatch = filterStatus === "all" || t.status === filterStatus;
+      (t.computedRoom || "").toLowerCase().includes(q) || (t.nickname || "").toLowerCase().includes(q);
+    const statusMatch = filterStatus === "all" || t.computedStatus === filterStatus;
     return searchMatch && statusMatch;
   });
 
@@ -237,7 +246,7 @@ export default function TenantsPage() {
           <select className="btn btn-outline" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ appearance: 'none', paddingRight: '2.5rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.875rem' }}>
             <option value="all">ทั้งหมด (All)</option>
             <option value="Active">กำลังเช่า (Active)</option>
-            <option value="Past">อดีตผู้เช่า (Past)</option>
+            <option value="Inactive">ไม่ได้เช่า (Inactive)</option>
           </select>
           <Filter size={18} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'inherit' }} />
         </div>
@@ -271,7 +280,7 @@ export default function TenantsPage() {
                       </div>
                     </div>
                   </td>
-                  <td>{t.room}</td>
+                  <td>{t.computedRoom}</td>
                   <td>
                     <div className={styles.contactInfo}>
                       <div className={styles.contactRow}><Phone size={14} /> {t.phone}</div>
@@ -282,7 +291,7 @@ export default function TenantsPage() {
                     {t.occupation && <div className={styles.workInfo}><span>{t.occupation}</span></div>}
                   </td>
                   <td>
-                    <span className={`badge ${t.status === 'Active' ? 'badge-success' : 'badge-neutral'}`}>{t.status?.toUpperCase()}</span>
+                    <span className={`badge ${t.computedStatus === 'Active' ? 'badge-success' : 'badge-neutral'}`}>{t.computedStatus?.toUpperCase()}</span>
                   </td>
                   <td>{t.contractEnd || '-'}</td>
                   <td>
