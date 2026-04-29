@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Plus, Search, Filter, Edit, X, Info } from "lucide-react";
+import { Plus, Search, Filter, Edit, X, Info, LayoutGrid, List } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
 
@@ -10,6 +10,7 @@ export default function RoomsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState("grid");
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -136,41 +137,120 @@ export default function RoomsPage() {
           </select>
           <Filter size={18} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'inherit' }} />
         </div>
+        <div className={styles.viewToggle}>
+          <button 
+            className={`${styles.toggleBtn} ${viewMode === 'grid' ? styles.toggleBtnActive : ''}`} 
+            onClick={() => setViewMode('grid')}
+            title="Grid View"
+          >
+            <LayoutGrid size={18} />
+          </button>
+          <button 
+            className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.toggleBtnActive : ''}`} 
+            onClick={() => setViewMode('list')}
+            title="List View"
+          >
+            <List size={18} />
+          </button>
+        </div>
       </div>
 
-      <div className={styles.roomGrid}>
-        {filteredRooms.map((room) => (
-          <div key={room.id} className={`card glass ${styles.roomCard}`}>
-            <div className={styles.roomImageContainer}>
-              <img src={room.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"} alt={room.name} className={styles.roomImage} />
-            </div>
-            <div className={styles.roomHeader}>
-              <h2>{room.name || `Room ${room.id}`}</h2>
-              <span className={`badge ${
-                room.status === 'available' ? 'badge-success' : 
-                room.status === 'occupied' ? 'badge-danger' : 'badge-warning'
-              }`}>
-                {room.status.toUpperCase()}
-              </span>
-            </div>
-            
-            <div className={styles.roomDetails}>
-              <p><strong>ประเภท (Type):</strong> {room.type}</p>
-              <p><strong>ค่าเช่า (Rent):</strong> ฿{room.price}/เดือน</p>
-              <p><strong>ผู้เช่า (Tenant):</strong> {room.tenant}</p>
-            </div>
+      {viewMode === 'grid' ? (
+        <div className={styles.roomGrid}>
+          {filteredRooms.map((room) => (
+            <div key={room.id} className={`card glass ${styles.roomCard}`}>
+              <div className={styles.roomImageContainer}>
+                <img src={room.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"} alt={room.name} className={styles.roomImage} />
+              </div>
+              <div className={styles.roomHeader}>
+                <h2>{room.name || `Room ${room.id}`}</h2>
+                <span className={`badge ${
+                  room.status === 'available' ? 'badge-success' : 
+                  room.status === 'occupied' ? 'badge-danger' : 'badge-warning'
+                }`}>
+                  {room.status.toUpperCase()}
+                </span>
+              </div>
+              
+              <div className={styles.roomDetails}>
+                <p><strong>ประเภท (Type):</strong> {room.type}</p>
+                <p><strong>ค่าเช่า (Rent):</strong> ฿{room.price}/เดือน</p>
+                <p><strong>ผู้เช่า (Tenant):</strong> {room.tenant}</p>
+              </div>
 
-            <div className={styles.roomActions}>
-              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => handleDetailsClick(room)}>
-                ดูรายละเอียด (Details)
-              </button>
-              <button className={styles.iconBtn} title="Edit Room" onClick={() => handleEditClick(room)}>
-                <Edit size={18} />
-              </button>
+              <div className={styles.roomActions}>
+                <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => handleDetailsClick(room)}>
+                  ดูรายละเอียด (Details)
+                </button>
+                <button className={styles.iconBtn} title="Edit Room" onClick={() => handleEditClick(room)}>
+                  <Edit size={18} />
+                </button>
+              </div>
             </div>
+          ))}
+        </div>
+      ) : (
+        <div className="card glass" style={{ padding: 0 }}>
+          <div className={styles.tableContainer} style={{ padding: "0 1.5rem 1.5rem", marginTop: "1.5rem" }}>
+            <table className={styles.roomTable}>
+              <thead>
+                <tr>
+                  <th>รูป (Image)</th>
+                  <th>ห้อง (Room)</th>
+                  <th>สถานะ (Status)</th>
+                  <th>ประเภท (Type)</th>
+                  <th>ค่าเช่า (Rent)</th>
+                  <th>ผู้เช่า (Tenant)</th>
+                  <th>จัดการ (Actions)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredRooms.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: "center", padding: "2rem", color: "var(--text-muted)" }}>
+                      ไม่พบห้องพัก (No rooms found)
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRooms.map((room) => (
+                    <tr key={room.id}>
+                      <td>
+                        <img 
+                          src={room.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=150&q=80"} 
+                          alt={room.name} 
+                          style={{ width: "60px", height: "40px", objectFit: "cover", borderRadius: "4px" }} 
+                        />
+                      </td>
+                      <td style={{ fontWeight: 600 }}>{room.name || `Room ${room.id}`}</td>
+                      <td>
+                        <span className={`badge ${
+                          room.status === 'available' ? 'badge-success' : 
+                          room.status === 'occupied' ? 'badge-danger' : 'badge-warning'
+                        }`}>
+                          {room.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td>{room.type}</td>
+                      <td>฿{room.price}/เดือน</td>
+                      <td>{room.tenant !== "-" ? room.tenant : <span style={{ color: "var(--text-muted)" }}>ไม่มี (None)</span>}</td>
+                      <td>
+                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                          <button className={styles.iconBtn} title="ดูรายละเอียด (Details)" onClick={() => handleDetailsClick(room)}>
+                            <Info size={16} />
+                          </button>
+                          <button className={styles.iconBtn} title="แก้ไข (Edit)" onClick={() => handleEditClick(room)}>
+                            <Edit size={16} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* Edit Modal */}
       {isModalOpen && (
