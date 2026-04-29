@@ -1,14 +1,22 @@
 "use client";
 
-import React, { useRef } from "react";
-import { Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Maximize2, ChevronLeft, ChevronRight, X, User, Phone, Briefcase, ExternalLink } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
 
 export default function CalendarPage() {
   const rightPanelRef = useRef(null);
   const leftPanelBodyRef = useRef(null);
-  const { rooms } = useData();
+  const router = useRouter();
+  const { rooms, tenants } = useData();
+  const [selectedTenant, setSelectedTenant] = useState(null);
+
+  const handleTenantClick = (tenantName) => {
+    const t = tenants?.find(t => t.name === tenantName);
+    if (t) setSelectedTenant(t);
+  };
 
   // Sync scroll between left panel (Y) and right panel (Y/X)
   const handleScroll = () => {
@@ -80,7 +88,11 @@ export default function CalendarPage() {
                   
                   {/* Dynamic Bookings based on room status */}
                   {room.status === 'occupied' && (
-                    <div className={`${styles.bookingBar} ${styles['status-occupied']}`} style={{ left: '100px', width: '400px' }}>
+                    <div 
+                      className={`${styles.bookingBar} ${styles['status-occupied']}`} 
+                      style={{ left: '100px', width: '400px', cursor: 'pointer' }}
+                      onClick={() => handleTenantClick(room.tenant)}
+                    >
                       ผู้เช่า (Guest): {room.tenant}
                     </div>
                   )}
@@ -96,6 +108,55 @@ export default function CalendarPage() {
 
         </div>
       </div>
+
+      {/* Tenant Quick View Modal */}
+      {selectedTenant && (
+        <div className="modal-overlay" onClick={() => setSelectedTenant(null)}>
+          <div className="modal-content glass" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.25rem' }}>
+                  {(selectedTenant.name || "?").charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>{selectedTenant.name}</h3>
+                  {selectedTenant.nickname && <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>"{selectedTenant.nickname}"</span>}
+                </div>
+              </div>
+              <button onClick={() => setSelectedTenant(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-main)' }}>
+                <User size={18} style={{ color: 'var(--primary)' }} />
+                <span><strong>ห้อง (Room):</strong> {selectedTenant.room || "-"}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-main)' }}>
+                <Phone size={18} style={{ color: 'var(--primary)' }} />
+                <span><strong>ติดต่อ (Phone):</strong> {selectedTenant.phone || "-"}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: 'var(--text-main)' }}>
+                <Briefcase size={18} style={{ color: 'var(--primary)' }} />
+                <span><strong>อาชีพ (Job):</strong> {selectedTenant.occupation || "-"}</span>
+              </div>
+            </div>
+
+            <button 
+              className="btn btn-primary" 
+              style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}
+              onClick={() => {
+                setSelectedTenant(null);
+                router.push(`/tenants?search=${encodeURIComponent(selectedTenant.name)}`);
+              }}
+            >
+              <ExternalLink size={18} />
+              ดูรายละเอียดทั้งหมด / แก้ไข (View & Edit)
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

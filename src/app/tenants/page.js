@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search, Filter, Mail, Phone, FileText, Edit, Trash2, X, Download, User, Briefcase, Heart, Eye, ChevronDown } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
@@ -30,6 +30,16 @@ export default function TenantsPage() {
   const [form, setForm] = useState(emptyForm());
   const [importData, setImportData] = useState([]);
   const [selectedImports, setSelectedImports] = useState(new Set());
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const searchParam = params.get('search');
+      if (searchParam) {
+        setSearchQuery(searchParam);
+      }
+    }
+  }, []);
 
   const setField = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
