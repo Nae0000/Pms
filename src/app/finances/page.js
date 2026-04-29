@@ -5,8 +5,10 @@ import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
 
 export default function FinancesPage() {
-  const { transactions, addTransaction, updateTransaction, deleteTransaction, isInitialLoading } = useData();
+  const { transactions, rooms, addTransaction, updateTransaction, deleteTransaction, isInitialLoading } = useData();
   const [activeTab, setActiveTab] = useState("all");
+  const [filterRoom, setFilterRoom] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState(null);
@@ -25,6 +27,7 @@ export default function FinancesPage() {
     expense_type: "",
     amount: "",
     status: "Paid",
+    room: "",
   });
 
   const [form, setForm] = useState(emptyForm());
@@ -36,6 +39,10 @@ export default function FinancesPage() {
 
   // ============ Filtering ============
   const filteredTx = (transactions || []).filter((t) => {
+    // Top dropdown filters
+    if (filterRoom !== "all" && t.room !== filterRoom) return false;
+    if (filterCategory !== "all" && t.category !== filterCategory) return false;
+
     if (activeTab === "income") return t.type === "income";
     if (activeTab === "expense") return t.type === "expense";
     if (activeTab === "fixed") return t.type === "expense" && t.expense_type === "fixed";
@@ -51,7 +58,14 @@ export default function FinancesPage() {
 
   const thisMonthTx = (transactions || []).filter((t) => {
     const d = new Date(t.date);
-    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    const isThisMonth = d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    if (!isThisMonth) return false;
+    
+    // Top dropdown filters
+    if (filterRoom !== "all" && t.room !== filterRoom) return false;
+    if (filterCategory !== "all" && t.category !== filterCategory) return false;
+    
+    return true;
   });
 
   const totalIncome = thisMonthTx
@@ -96,6 +110,7 @@ export default function FinancesPage() {
       expense_type: tx.expense_type || "",
       amount: String(tx.amount || ""),
       status: tx.status || "Paid",
+      room: tx.room || "",
     });
     setIsEditModalOpen(true);
   };
@@ -115,8 +130,8 @@ export default function FinancesPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = ["Date", "Description", "Category", "Type", "Expense Type", "Amount", "Status"];
-    const rows = (transactions || []).map((t) => [t.date, t.description, t.category, t.type, t.expense_type || "-", t.amount, t.status]);
+    const headers = ["Date", "Description", "Room", "Category", "Type", "Expense Type", "Amount", "Status"];
+    const rows = (transactions || []).map((t) => [t.date, t.description, t.room || "-", t.category, t.type, t.expense_type || "-", t.amount, t.status]);
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -158,6 +173,15 @@ export default function FinancesPage() {
         <input type="text" className="input-field" value={form.description} onChange={(e) => setField("description", e.target.value)} placeholder="e.g. Rent Payment - Room 101" style={W100} required />
       </div>
       <div style={{ display: "flex", gap: "1rem" }}>
+        <div style={{ flex: 1 }}>
+          <label style={LABEL}>ห้องพัก (Room)</label>
+          <select className="input-field" value={form.room} onChange={(e) => setField("room", e.target.value)} style={W100}>
+            <option value="">-- ไม่ระบุ / ส่วนกลาง (None/Common) --</option>
+            {(rooms || []).map(r => (
+              <option key={r.id} value={r.name}>{r.name}</option>
+            ))}
+          </select>
+        </div>
         <div style={{ flex: 1 }}>
           <label style={LABEL}>หมวดหมู่ (Category)</label>
           {isAddingCategory ? (
@@ -246,6 +270,23 @@ export default function FinancesPage() {
         </div>
       </div>
 
+      <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", alignItems: "center", background: "var(--bg-card)", padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-light)" }}>
+        <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>ตัวกรอง (Filters):</span>
+        <select className="input-field" value={filterRoom} onChange={(e) => setFilterRoom(e.target.value)} style={{ width: "200px", padding: "0.5rem" }}>
+          <option value="all">ทุกห้อง (All Rooms)</option>
+          <option value="">ไม่ระบุ / ส่วนกลาง</option>
+          {(rooms || []).map(r => (
+            <option key={r.id} value={r.name}>{r.name}</option>
+          ))}
+        </select>
+        <select className="input-field" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ width: "200px", padding: "0.5rem" }}>
+          <option value="all">ทุกหมวดหมู่ (All Categories)</option>
+          {allCategories.map((c, i) => (
+            <option key={i} value={c}>{c}</option>
+          ))}
+        </select>
+      </div>
+
       <div className={styles.summaryCards}>
         <div className={`${styles.summaryCard} ${styles.incomeCard}`}>
           <h3>รายรับทั้งหมด (Total Income - {monthNames[currentMonth]})</h3>
@@ -290,6 +331,7 @@ export default function FinancesPage() {
               <tr>
                 <th>วันที่ (Date)</th>
                 <th>รายละเอียด (Description)</th>
+                <th>ห้อง (Room)</th>
                 <th>หมวดหมู่ (Category)</th>
                 <th>จำนวนเงิน (Amount)</th>
                 <th>สถานะ (Status)</th>
@@ -308,6 +350,7 @@ export default function FinancesPage() {
                   <tr key={t.id}>
                     <td>{t.date}</td>
                     <td>{t.description}</td>
+                    <td>{t.room ? <span className="badge badge-info">{t.room}</span> : <span style={{ color: "var(--text-muted)" }}>-</span>}</td>
                     <td>
                       <span className="badge badge-neutral">{t.category}</span>
                       {t.type === 'expense' && t.expense_type && (
