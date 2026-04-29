@@ -369,7 +369,10 @@ export default function RoomsPage() {
                     required
                   >
                     <option value="">-- เลือกผู้เช่า (Select Tenant) --</option>
-                    {activeTenants.filter(t => (t.name || "").toLowerCase().includes(tenantSearch.toLowerCase()) || (t.nickname || "").toLowerCase().includes(tenantSearch.toLowerCase())).map((t, i) => (
+                    {activeTenants.filter(t => {
+                      const fullText = `${t.name || ""} ${t.nickname || ""} ${t.room || "-"}`.toLowerCase();
+                      return fullText.includes(tenantSearch.toLowerCase());
+                    }).map((t, i) => (
                       <option key={i} value={t.name}>{t.name}{t.nickname ? ` "${t.nickname}"` : ''} — ห้อง {t.room || '-'}</option>
                     ))}
                   </select>
@@ -492,7 +495,10 @@ export default function RoomsPage() {
                     required
                   >
                     <option value="">-- เลือกผู้เช่า (Select Tenant) --</option>
-                    {activeTenants.filter(t => (t.name || "").toLowerCase().includes(tenantSearch.toLowerCase()) || (t.nickname || "").toLowerCase().includes(tenantSearch.toLowerCase())).map((t, i) => (
+                    {activeTenants.filter(t => {
+                      const fullText = `${t.name || ""} ${t.nickname || ""} ${t.room || "-"}`.toLowerCase();
+                      return fullText.includes(tenantSearch.toLowerCase());
+                    }).map((t, i) => (
                       <option key={i} value={t.name}>{t.name}{t.nickname ? ` "${t.nickname}"` : ''} — ห้อง {t.room || '-'}</option>
                     ))}
                   </select>
