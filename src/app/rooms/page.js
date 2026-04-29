@@ -13,6 +13,7 @@ export default function RoomsPage() {
   const [viewMode, setViewMode] = useState("grid");
   
   const [searchQuery, setSearchQuery] = useState("");
+  const [tenantSearch, setTenantSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
   const [editingRoom, setEditingRoom] = useState(null);
@@ -31,6 +32,7 @@ export default function RoomsPage() {
     setRoomName(room.name || `Room ${room.id}`);
     setStatus(room.status);
     setTenant(room.tenant === "-" ? "" : room.tenant);
+    setTenantSearch("");
     setRoomType(room.type || "Standard");
     setRoomPrice(room.price || "");
     setRoomImage(room.image || "");
@@ -41,6 +43,7 @@ export default function RoomsPage() {
     setRoomName("");
     setStatus("available");
     setTenant("");
+    setTenantSearch("");
     setRoomType("Standard");
     setRoomPrice("");
     setRoomImage("");
@@ -350,6 +353,14 @@ export default function RoomsPage() {
               {status === 'occupied' && (
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Tenant Name (ชื่อผู้เช่า)</label>
+                  <input 
+                    type="text"
+                    placeholder="พิมพ์เพื่อค้นหาชื่อผู้เช่า..."
+                    className="input-field"
+                    style={{ width: '100%', marginBottom: '0.5rem' }}
+                    value={tenantSearch}
+                    onChange={(e) => setTenantSearch(e.target.value)}
+                  />
                   <select 
                     className="input-field" 
                     value={tenant} 
@@ -358,7 +369,7 @@ export default function RoomsPage() {
                     required
                   >
                     <option value="">-- เลือกผู้เช่า (Select Tenant) --</option>
-                    {activeTenants.map((t, i) => (
+                    {activeTenants.filter(t => (t.name || "").toLowerCase().includes(tenantSearch.toLowerCase()) || (t.nickname || "").toLowerCase().includes(tenantSearch.toLowerCase())).map((t, i) => (
                       <option key={i} value={t.name}>{t.name}{t.nickname ? ` "${t.nickname}"` : ''} — ห้อง {t.room || '-'}</option>
                     ))}
                   </select>
@@ -465,6 +476,14 @@ export default function RoomsPage() {
               {status === 'occupied' && (
                 <div>
                   <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Tenant Name (ชื่อผู้เช่า)</label>
+                  <input 
+                    type="text"
+                    placeholder="พิมพ์เพื่อค้นหาชื่อผู้เช่า..."
+                    className="input-field"
+                    style={{ width: '100%', marginBottom: '0.5rem' }}
+                    value={tenantSearch}
+                    onChange={(e) => setTenantSearch(e.target.value)}
+                  />
                   <select 
                     className="input-field" 
                     value={tenant} 
@@ -473,7 +492,7 @@ export default function RoomsPage() {
                     required
                   >
                     <option value="">-- เลือกผู้เช่า (Select Tenant) --</option>
-                    {activeTenants.map((t, i) => (
+                    {activeTenants.filter(t => (t.name || "").toLowerCase().includes(tenantSearch.toLowerCase()) || (t.nickname || "").toLowerCase().includes(tenantSearch.toLowerCase())).map((t, i) => (
                       <option key={i} value={t.name}>{t.name}{t.nickname ? ` "${t.nickname}"` : ''} — ห้อง {t.room || '-'}</option>
                     ))}
                   </select>
