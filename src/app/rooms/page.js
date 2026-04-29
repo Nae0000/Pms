@@ -99,6 +99,10 @@ export default function RoomsPage() {
     const matchesStatus = filterStatus === "all" || room.status === filterStatus;
     
     return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    const nameA = a.name || "";
+    const nameB = b.name || "";
+    return nameA.localeCompare(nameB, undefined, { numeric: true, sensitivity: 'base' });
   });
 
   return (
