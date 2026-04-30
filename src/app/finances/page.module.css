@@ -85,6 +85,7 @@
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid var(--border-light);
+  white-space: nowrap;
 }
 
 .financeTable th {
@@ -124,4 +125,37 @@
   color: var(--danger);
   border-color: var(--danger);
   background: rgba(239, 68, 68, 0.05);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header button {
+    width: 100%;
+  }
+
+  .summaryCards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+
+  .tab {
+    flex: 1 1 calc(50% - 0.5rem);
+    text-align: center;
+    padding: 0.5rem;
+  }
+
+  .tableContainer {
+    margin: 0 -1.5rem;
+    padding: 0 1.5rem;
+  }
 }

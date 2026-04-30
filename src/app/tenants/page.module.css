@@ -308,7 +308,35 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header button {
+    width: 100%;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchBox {
+    width: 100%;
+  }
+  
+  .controls select, .controls > div {
+    width: 100%;
+  }
+
   .detailGrid {
     grid-template-columns: 1fr;
+  }
+  
+  .tableContainer {
+    margin: 0 -1.5rem;
+    padding: 0 1.5rem;
   }
 }

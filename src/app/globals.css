@@ -300,3 +300,39 @@ a {
   background: var(--border-light);
   border-radius: 3px;
 }
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1rem;
+    padding-bottom: 5rem; /* Space for BottomNav */
+  }
+
+  .page-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .modal-overlay {
+    padding: 0.5rem;
+    align-items: flex-end; /* Modals from bottom on mobile */
+  }
+
+  .modal-content, .modal-content-lg {
+    padding: 1.5rem;
+    max-height: 85vh;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0; /* Bottom sheet style */
+    margin-bottom: 0;
+    width: 100%;
+  }
+
+  .btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+

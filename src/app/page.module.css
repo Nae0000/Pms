@@ -71,6 +71,21 @@
   }
 }
 
+@media (max-width: 768px) {
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .cardHeader {
+    flex-direction: row; /* keep horizontal */
+  }
+
+  .actionGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .cardHeader {
   display: flex;
   justify-content: space-between;

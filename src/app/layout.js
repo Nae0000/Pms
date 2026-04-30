@@ -1,6 +1,7 @@
 import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
+import BottomNav from "@/components/BottomNav";
 import { DataProvider } from "./context/DataContext";
 
 const outfit = Outfit({
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
             <main className="main-content">
               {children}
             </main>
+            <BottomNav />
           </div>
         </DataProvider>
       </body>

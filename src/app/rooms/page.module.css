@@ -145,6 +145,7 @@
 .roomTable th, .roomTable td {
   padding: 1rem 1.5rem;
   border-bottom: 1px solid var(--border-light);
+  white-space: nowrap;
 }
 
 .roomTable th {
@@ -161,4 +162,48 @@
 .roomTable td {
   font-size: 0.95rem;
   color: var(--text-main);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .header button {
+    width: 100%;
+  }
+
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .searchBox {
+    width: 100%;
+  }
+  
+  .controls > div {
+    width: 100%;
+  }
+
+  .controls select {
+    width: 100%;
+  }
+
+  .viewToggle {
+    justify-content: center;
+  }
+
+  .roomGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Make table scrollable but hide scrollbar for clean look */
+  .tableContainer {
+    margin: 0 -1.5rem;
+    padding: 0 1.5rem;
+  }
 }
