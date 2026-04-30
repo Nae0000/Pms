@@ -348,10 +348,10 @@ export default function FinancesPage() {
               ) : (
                 filteredTx.map((t) => (
                   <tr key={t.id}>
-                    <td>{t.date}</td>
-                    <td>{t.description}</td>
-                    <td>{t.room ? <span className="badge badge-info">{t.room}</span> : <span style={{ color: "var(--text-muted)" }}>-</span>}</td>
-                    <td>
+                    <td data-label="วันที่ (Date)">{t.date}</td>
+                    <td data-label="รายละเอียด (Description)">{t.description}</td>
+                    <td data-label="ห้อง (Room)">{t.room ? <span className="badge badge-info">{t.room}</span> : <span style={{ color: "var(--text-muted)" }}>-</span>}</td>
+                    <td data-label="หมวดหมู่ (Category)">
                       <span className="badge badge-neutral">{t.category}</span>
                       {t.type === 'expense' && t.expense_type && (
                         <span className={`badge ${t.expense_type === 'fixed' ? 'badge-info' : 'badge-warning'}`} style={{ marginLeft: '0.4rem', fontSize: '0.7rem' }}>
@@ -359,14 +359,14 @@ export default function FinancesPage() {
                         </span>
                       )}
                     </td>
-                    <td className={t.type === "income" ? styles.amountIncome : styles.amountExpense}>
+                    <td data-label="จำนวนเงิน (Amount)" className={t.type === "income" ? styles.amountIncome : styles.amountExpense}>
                       {t.type === "income" ? "+" : "-"}฿{parseFloat(String(t.amount).replace(/,/g, "") || 0).toLocaleString()}
                     </td>
-                    <td>
+                    <td data-label="สถานะ (Status)">
                       <span className={`badge ${t.status === "Paid" ? "badge-success" : t.status === "Overdue" ? "badge-danger" : "badge-warning"}`}>{t.status}</span>
                     </td>
-                    <td>
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <td data-label="จัดการ (Actions)">
+                      <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
                         <button className={styles.actionBtn} title="แก้ไข (Edit)" onClick={() => handleEditClick(t)}>
                           <Edit size={16} />
                         </button>

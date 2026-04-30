@@ -283,7 +283,7 @@ export default function TenantsPage() {
                 <tr><td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>กำลังโหลดข้อมูล (Loading...)</td></tr>
               ) : filteredTenants.length > 0 ? filteredTenants.map(t => (
                 <tr key={t.id} onClick={() => handleViewClick(t)}>
-                  <td>
+                  <td data-label="ผู้เช่า (Tenant)">
                     <div className={styles.tenantInfo}>
                       <div className={styles.avatar}>{(t.name || "?").charAt(0).toUpperCase()}</div>
                       <div className={styles.tenantNameBlock}>
@@ -292,21 +292,21 @@ export default function TenantsPage() {
                       </div>
                     </div>
                   </td>
-                  <td>{t.computedRoom}</td>
-                  <td>
+                  <td data-label="ห้อง (Room)">{t.computedRoom}</td>
+                  <td data-label="ติดต่อ (Contact)">
                     <div className={styles.contactInfo}>
                       <div className={styles.contactRow}><Phone size={14} /> {t.phone}</div>
                       {t.socialContact && <div className={styles.socialBadge}>{t.socialContact}</div>}
                     </div>
                   </td>
-                  <td>
+                  <td data-label="อาชีพ (Job)">
                     {t.occupation && <div className={styles.workInfo}><span>{t.occupation}</span></div>}
                   </td>
-                  <td>
+                  <td data-label="สถานะ">
                     <span className={`badge ${t.computedStatus === 'Active' ? 'badge-success' : 'badge-neutral'}`}>{t.computedStatus?.toUpperCase()}</span>
                   </td>
-                  <td>{t.contractEnd || '-'}</td>
-                  <td>
+                  <td data-label="สัญญา">{t.contractEnd || '-'}</td>
+                  <td data-label="จัดการ">
                     <div className={styles.actionCell} onClick={e => e.stopPropagation()}>
                       <button className={styles.iconBtn} title="View" onClick={() => handleViewClick(t)}><Eye size={16} /></button>
                       <button className={styles.iconBtn} title="Edit" onClick={() => handleEditClick(t)}><Edit size={16} /></button>

@@ -201,9 +201,50 @@
     grid-template-columns: 1fr;
   }
   
+  .roomTable thead {
+    display: none;
+  }
+  
+  .roomTable, .roomTable tbody, .roomTable tr, .roomTable td {
+    display: block;
+    width: 100%;
+  }
+  
+  .roomTable tr {
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    background: var(--bg-card);
+  }
+  
+  .roomTable td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed var(--border-light);
+    padding: 0.75rem 0.5rem;
+    white-space: normal;
+    text-align: right;
+  }
+  
+  .roomTable td:last-child {
+    border-bottom: none;
+  }
+  
+  .roomTable td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-align: left;
+    margin-right: 1rem;
+  }
+  
   /* Make table scrollable but hide scrollbar for clean look */
   .tableContainer {
-    margin: 0 -1.5rem;
-    padding: 0 1.5rem;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
   }
 }

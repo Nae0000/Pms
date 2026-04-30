@@ -223,15 +223,15 @@ export default function RoomsPage() {
                 ) : (
                   filteredRooms.map((room) => (
                     <tr key={room.id}>
-                      <td>
+                      <td data-label="รูป (Image)">
                         <img 
                           src={room.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=150&q=80"} 
                           alt={room.name} 
                           style={{ width: "60px", height: "40px", objectFit: "cover", borderRadius: "4px" }} 
                         />
                       </td>
-                      <td style={{ fontWeight: 600 }}>{room.name || `Room ${room.id}`}</td>
-                      <td>
+                      <td data-label="ห้อง (Room)" style={{ fontWeight: 600 }}>{room.name || `Room ${room.id}`}</td>
+                      <td data-label="สถานะ (Status)">
                         <span className={`badge ${
                           room.status === 'available' ? 'badge-success' : 
                           room.status === 'reserved' ? 'badge-info' :
@@ -240,11 +240,11 @@ export default function RoomsPage() {
                           {room.status === 'reserved' ? 'RESERVED' : room.status.toUpperCase()}
                         </span>
                       </td>
-                      <td>{room.type}</td>
-                      <td>฿{room.price}/เดือน</td>
-                      <td>{room.tenant !== "-" ? room.tenant : <span style={{ color: "var(--text-muted)" }}>ไม่มี (None)</span>}</td>
-                      <td>
-                        <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <td data-label="ประเภท (Type)">{room.type}</td>
+                      <td data-label="ค่าเช่า (Rent)">฿{room.price}/เดือน</td>
+                      <td data-label="ผู้เช่า (Tenant)">{room.tenant !== "-" ? room.tenant : <span style={{ color: "var(--text-muted)" }}>ไม่มี (None)</span>}</td>
+                      <td data-label="จัดการ (Actions)">
+                        <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
                           <button className={styles.iconBtn} title="ดูรายละเอียด (Details)" onClick={() => handleDetailsClick(room)}>
                             <Info size={16} />
                           </button>
