@@ -44,6 +44,10 @@ jobs:
         
       - name: Build with Next.js
         run: npx next build
+        env:
+          NEXT_PUBLIC_SHEETS_API_URL: ${{ vars.SHEETS_API_URL }}
+          NEXT_PUBLIC_SHEETS_API_KEY: ${{ secrets.SHEETS_API_KEY }}
+          NEXT_PUBLIC_SHEET_URL: ${{ vars.SHEET_URL }}
         
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

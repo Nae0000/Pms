@@ -120,7 +120,7 @@ export default function CalendarPage() {
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)' }}>{selectedTenant.name}</h3>
-                  {selectedTenant.nickname && <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>"{selectedTenant.nickname}"</span>}
+                  {selectedTenant.nickname && <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>&quot;{selectedTenant.nickname}&quot;</span>}
                 </div>
               </div>
               <button onClick={() => setSelectedTenant(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>

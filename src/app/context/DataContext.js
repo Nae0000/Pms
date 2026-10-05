@@ -1,6 +1,6 @@
 "use client";
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import * as api from '../../lib/sheetsApi';
 
 const DataContext = createContext();
 
@@ -57,23 +57,6 @@ function parseCSV(text) {
   return rows;
 }
 
-// ============ Default Data ============
-const DEFAULT_ROOMS = [
-  { id: "101", name: "A-1. AniYuki", type: "Standard", price: "5,000", status: "occupied", tenant: "Somchai S.", image: "" },
-  { id: "102", name: "B-5. Guest House", type: "Standard", price: "5,000", status: "available", tenant: "-", image: "" },
-  { id: "103", name: "B-6. TOMA HOUSE", type: "Deluxe", price: "7,500", status: "maintenance", tenant: "-", image: "" },
-  { id: "104", name: "FRONTIER VILLAGE@1", type: "Standard", price: "5,000", status: "occupied", tenant: "Somsri M.", image: "" },
-  { id: "105", name: "FRONTIER VILLAGE@2", type: "Standard", price: "5,000", status: "available", tenant: "-", image: "" },
-  { id: "201", name: "HB-1. Miyata", type: "Suite", price: "12,000", status: "occupied", tenant: "Wichai T.", image: "" },
-];
-
-const DEFAULT_TENANTS = [
-  { name: "Somchai Sripasert", nickname: "", dob: "", age: "", gender: "", room: "101", phone: "081-234-5678", email: "somchai@example.com", socialContact: "", occupation: "", workplace: "", status: "Active", contractEnd: "2026-12-31", income: "", province: "" },
-  { name: "Somsri Maneerat", nickname: "", dob: "", age: "", gender: "", room: "104", phone: "089-876-5432", email: "somsri.m@example.com", socialContact: "", occupation: "", workplace: "", status: "Active", contractEnd: "2026-10-15", income: "", province: "" },
-  { name: "Wichai Thongkam", nickname: "", dob: "", age: "", gender: "", room: "201", phone: "082-345-6789", email: "-", socialContact: "", occupation: "", workplace: "", status: "Active", contractEnd: "2027-01-20", income: "", province: "" },
-  { name: "Amonrat Sukjai", nickname: "", dob: "", age: "", gender: "", room: "-", phone: "083-456-7890", email: "amonrat@example.com", socialContact: "", occupation: "", workplace: "", status: "Past", contractEnd: "2025-12-31", income: "", province: "" },
-];
-
 // ============ Mappers ============
 function mapTenantFromDB(t) {
   return {
@@ -84,7 +67,7 @@ function mapTenantFromDB(t) {
 }
 
 function mapTenantToDB(t) {
-  const { socialContact, contractEnd, created_at, ...rest } = t;
+  const { socialContact, contractEnd, created_at, timestamp, computedRoom, computedStatus, ...rest } = t;
   return {
     ...rest,
     social_contact: socialContact || '',
@@ -93,84 +76,80 @@ function mapTenantToDB(t) {
 }
 
 // ============ Provider ============
+const errMsg = (e) => (e && e.message) || String(e);
+
 export const DataProvider = ({ children }) => {
   const [rooms, setRooms] = useState([]);
   const [tenants, setTenants] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [importLoading, setImportLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [loadError, setLoadError] = useState(api.isConfigured ? "" : "NOT_CONFIGURED");
+  const [saveError, setSaveError] = useState("");
+  const [pending, setPending] = useState(0);
+
+  const fetchData = async () => {
+    if (!api.isConfigured) {
+      setIsInitialLoading(false);
+      return;
+    }
+    setIsInitialLoading(true);
+    try {
+      const data = await api.fetchAll();
+      setRooms((data.rooms || []).map(r => ({ ...r, status: r.status || 'available', tenant: r.tenant || '-' })));
+      setTenants((data.tenants || []).map(mapTenantFromDB));
+      setTransactions(
+        (data.transactions || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      );
+      setLoadError("");
+    } catch (err) {
+      console.error("Error loading data:", err);
+      setLoadError(errMsg(err));
+    }
+    setIsInitialLoading(false);
+  };
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
-    setIsInitialLoading(true);
-    
-    // 1. Fetch Rooms
-    const { data: roomsData, error: roomsError } = await supabase.from('rooms').select('*');
-    if (roomsError) {
-      console.error("Error fetching rooms:", roomsError);
-    } else if (roomsData) {
-      setRooms(roomsData);
+  // Run a write; on failure surface it and reload so the UI matches the sheet.
+  const run = async (fn) => {
+    setPending(n => n + 1);
+    setSaveError("");
+    try {
+      return await fn();
+    } catch (err) {
+      console.error("Save failed:", err);
+      setSaveError(errMsg(err));
+      fetchData();
+      return null;
+    } finally {
+      setPending(n => n - 1);
     }
-
-    // 2. Fetch Tenants
-    const { data: tenantsData, error: tenantsError } = await supabase.from('tenants').select('*');
-    if (tenantsError) {
-      console.error("Error fetching tenants:", tenantsError);
-    } else if (tenantsData) {
-      setTenants(tenantsData.map(mapTenantFromDB));
-    }
-
-    // 3. Fetch Transactions
-    const { data: txData, error: txError } = await supabase.from('transactions').select('*').order('date', { ascending: false });
-    if (txError) {
-      console.error("Error fetching transactions:", txError);
-    } else if (txData) {
-      setTransactions(txData);
-    }
-    
-    setIsInitialLoading(false);
   };
 
+  // ============ Rooms ============
   const updateRoom = async (id, updatedData) => {
-    // Optimistic UI update
     setRooms(prev => prev.map(r => r.id === id ? { ...r, ...updatedData } : r));
-    const { error } = await supabase.from('rooms').update(updatedData).eq('id', id);
-    if (error) console.error("Error updating room:", error);
+    await run(() => api.updateRow('rooms', id, updatedData));
   };
 
   const addRoom = async (newRoomData) => {
-    const newRoom = {
-      id: Date.now().toString(),
-      ...newRoomData
-    };
-    const { data, error } = await supabase.from('rooms').insert([newRoom]).select();
-    if (error) {
-      console.error("Error adding room:", error);
-    } else if (data) {
-      setRooms(prev => [...prev, data[0]]);
-    }
+    const row = await run(() => api.insertRow('rooms', newRoomData));
+    if (row) setRooms(prev => [...prev, row]);
   };
 
+  // ============ Tenants ============
   const updateTenant = async (id, updatedData) => {
-    // Optimistic UI update
     setTenants(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
-    const dbData = mapTenantToDB(updatedData);
-    const { error } = await supabase.from('tenants').update(dbData).eq('id', id);
-    if (error) console.error("Error updating tenant:", error);
+    await run(() => api.updateRow('tenants', id, mapTenantToDB(updatedData)));
   };
 
   const addTenant = async (newTenantData) => {
     const { id: _oldId, ...rest } = newTenantData;
-    const dbData = mapTenantToDB(rest);
-    const { data, error } = await supabase.from('tenants').insert([dbData]).select();
-    if (error) {
-      console.error("Error adding tenant:", error);
-    } else if (data) {
-      setTenants(prev => [...prev, mapTenantFromDB(data[0])]);
-    }
+    const row = await run(() => api.insertRow('tenants', mapTenantToDB(rest)));
+    if (row) setTenants(prev => [...prev, mapTenantFromDB(row)]);
   };
 
   const addMultipleTenants = async (tenantsArray) => {
@@ -178,21 +157,13 @@ export const DataProvider = ({ children }) => {
       const { id: _oldId, ...rest } = t;
       return mapTenantToDB(rest);
     });
-    
-    const { data, error } = await supabase.from('tenants').insert(dbDataArray).select();
-    if (error) {
-      console.error("Error bulk adding tenants:", error);
-    } else if (data) {
-      const mapped = data.map(mapTenantFromDB);
-      setTenants(prev => [...prev, ...mapped]);
-    }
+    const rows = await run(() => api.insertRows('tenants', dbDataArray));
+    if (rows) setTenants(prev => [...prev, ...rows.map(mapTenantFromDB)]);
   };
 
   const deleteTenant = async (id) => {
-    // Optimistic UI update
     setTenants(prev => prev.filter(t => t.id !== id));
-    const { error } = await supabase.from('tenants').delete().eq('id', id);
-    if (error) console.error("Error deleting tenant:", error);
+    await run(() => api.deleteRow('tenants', id));
   };
 
   // Import tenants from Google Sheets (form responses)
@@ -241,24 +212,18 @@ export const DataProvider = ({ children }) => {
 
   // ============ Transaction CRUD ============
   const addTransaction = async (txData) => {
-    const { data, error } = await supabase.from('transactions').insert([txData]).select();
-    if (error) {
-      console.error("Error adding transaction:", error);
-    } else if (data) {
-      setTransactions(prev => [data[0], ...prev]);
-    }
+    const row = await run(() => api.insertRow('transactions', txData));
+    if (row) setTransactions(prev => [row, ...prev]);
   };
 
   const updateTransaction = async (id, updatedData) => {
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
-    const { error } = await supabase.from('transactions').update(updatedData).eq('id', id);
-    if (error) console.error("Error updating transaction:", error);
+    await run(() => api.updateRow('transactions', id, updatedData));
   };
 
   const deleteTransaction = async (id) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
-    const { error } = await supabase.from('transactions').delete().eq('id', id);
-    if (error) console.error("Error deleting transaction:", error);
+    await run(() => api.deleteRow('transactions', id));
   };
 
   return (
@@ -266,7 +231,8 @@ export const DataProvider = ({ children }) => {
       rooms, setRooms, updateRoom, addRoom,
       tenants, setTenants, updateTenant, addTenant, addMultipleTenants, deleteTenant,
       transactions, addTransaction, updateTransaction, deleteTransaction,
-      importFromGoogleSheets, importLoading, isInitialLoading
+      importFromGoogleSheets, importLoading, isInitialLoading,
+      loadError, saveError, setSaveError, saving: pending > 0, refresh: fetchData
     }}>
       {children}
     </DataContext.Provider>

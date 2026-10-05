@@ -255,6 +255,7 @@ export default function FinancesPage() {
   }
 
   return (
+    <>
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
         <h1 className="page-title">ภาพรวมการเงิน (Financial Overview)</h1>
@@ -315,13 +316,13 @@ export default function FinancesPage() {
             รายรับ (Income)
           </button>
           <button className={`${styles.tab} ${activeTab === "expense" ? styles.tabActive : ""}`} onClick={() => setActiveTab("expense")}>
-            รายจ่ายทั้งหมด (All Expenses)
+            รายจ่าย (Expenses)
           </button>
           <button className={`${styles.tab} ${activeTab === "fixed" ? styles.tabActive : ""}`} onClick={() => setActiveTab("fixed")}>
-            คงที่ (Fixed)
+            รายจ่ายคงที่ (Fixed)
           </button>
           <button className={`${styles.tab} ${activeTab === "variable" ? styles.tabActive : ""}`} onClick={() => setActiveTab("variable")}>
-            ผันแปร (Variable)
+            รายจ่ายผันแปร (Variable)
           </button>
         </div>
 
@@ -382,129 +383,130 @@ export default function FinancesPage() {
           </table>
         </div>
       </div>
-
-      {/* Add Modal */}
-      {isAddModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content glass" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>เพิ่มรายการ (Add Transaction)</h2>
-              <button onClick={() => setIsAddModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleSaveAdd} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {renderFormFields()}
-              <div style={BTNS}>
-                <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsAddModalOpen(false)}>
-                  ยกเลิก (Cancel)
-                </button>
-                <button type="submit" className="btn btn-primary" style={FLEX1}>
-                  เพิ่มรายการ (Add)
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {isEditModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content glass" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>แก้ไขรายการ (Edit Transaction)</h2>
-              <button onClick={() => setIsEditModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleSaveEdit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {renderFormFields()}
-              <div style={BTNS}>
-                <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsEditModalOpen(false)}>
-                  ยกเลิก (Cancel)
-                </button>
-                <button type="submit" className="btn btn-primary" style={FLEX1}>
-                  บันทึก (Save)
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Category Management Modal */}
-      {isCategoryManageOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content glass" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px' }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-              <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>จัดการหมวดหมู่ (Manage Categories)</h2>
-              <button onClick={() => { setIsCategoryManageOpen(false); setEditCatIdx(-1); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
-                <X size={20} />
-              </button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {allCategories.map((cat, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 0.75rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}>
-                  {editCatIdx === idx ? (
-                    <>
-                      <input
-                        type="text"
-                        className="input-field"
-                        value={editCatValue}
-                        onChange={(e) => setEditCatValue(e.target.value)}
-                        style={{ flex: 1, padding: '0.4rem 0.6rem' }}
-                        autoFocus
-                      />
-                      <button type="button" className="btn btn-primary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={() => {
-                        if (editCatValue.trim() && editCatValue.trim() !== cat) {
-                          const oldName = cat;
-                          const newName = editCatValue.trim();
-                          // Update in categories list
-                          setCategories(prev => prev.map(c => c === oldName ? newName : c));
-                          // Update all existing transactions with this category
-                          (transactions || []).forEach(t => {
-                            if (t.category === oldName) {
-                              updateTransaction(t.id, { category: newName });
-                            }
-                          });
-                          // Update form if currently selected
-                          if (form.category === oldName) setField('category', newName);
-                        }
-                        setEditCatIdx(-1);
-                      }}>บันทึก</button>
-                      <button type="button" className="btn btn-outline" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={() => setEditCatIdx(-1)}>ยกเลิก</button>
-                    </>
-                  ) : (
-                    <>
-                      <span style={{ flex: 1, fontSize: '0.9rem' }}>{cat}</span>
-                      <button type="button" className={styles.actionBtn} title="แก้ไข" onClick={() => { setEditCatIdx(idx); setEditCatValue(cat); }}>
-                        <Edit size={14} />
-                      </button>
-                      <button type="button" className={`${styles.actionBtn} ${styles.actionBtnDanger}`} title="ลบ" onClick={() => {
-                        if (confirm(`ลบหมวดหมู่ "${cat}" ? รายการที่ใช้หมวดหมู่นี้จะถูกเปลี่ยนเป็น "Other"`)) {
-                          setCategories(prev => prev.filter(c => c !== cat));
-                          (transactions || []).forEach(t => {
-                            if (t.category === cat) {
-                              updateTransaction(t.id, { category: 'Other' });
-                            }
-                          });
-                          if (form.category === cat) setField('category', 'Other');
-                        }
-                      }}>
-                        <Trash2 size={14} />
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-            <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-              <button className="btn btn-primary" onClick={() => { setIsCategoryManageOpen(false); setEditCatIdx(-1); }}>เสร็จสิ้น (Done)</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+
+    {/* Add Modal */}
+    {isAddModalOpen && (
+      <div className="modal-overlay">
+        <div className="modal-content glass" onClick={(e) => e.stopPropagation()}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>เพิ่มรายการ (Add Transaction)</h2>
+            <button onClick={() => setIsAddModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+              <X size={20} />
+            </button>
+          </div>
+          <form onSubmit={handleSaveAdd} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {renderFormFields()}
+            <div style={BTNS}>
+              <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsAddModalOpen(false)}>
+                ยกเลิก (Cancel)
+              </button>
+              <button type="submit" className="btn btn-primary" style={FLEX1}>
+                เพิ่มรายการ (Add)
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+
+    {/* Edit Modal */}
+    {isEditModalOpen && (
+      <div className="modal-overlay">
+        <div className="modal-content glass" onClick={(e) => e.stopPropagation()}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>แก้ไขรายการ (Edit Transaction)</h2>
+            <button onClick={() => setIsEditModalOpen(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+              <X size={20} />
+            </button>
+          </div>
+          <form onSubmit={handleSaveEdit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {renderFormFields()}
+            <div style={BTNS}>
+              <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsEditModalOpen(false)}>
+                ยกเลิก (Cancel)
+              </button>
+              <button type="submit" className="btn btn-primary" style={FLEX1}>
+                บันทึก (Save)
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+
+    {/* Category Management Modal */}
+    {isCategoryManageOpen && (
+      <div className="modal-overlay">
+        <div className="modal-content glass" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+            <h2 style={{ fontSize: "1.25rem", fontWeight: "600" }}>จัดการหมวดหมู่ (Manage Categories)</h2>
+            <button onClick={() => { setIsCategoryManageOpen(false); setEditCatIdx(-1); }} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+              <X size={20} />
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {allCategories.map((cat, idx) => (
+              <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 0.75rem', background: 'var(--bg-input)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)' }}>
+                {editCatIdx === idx ? (
+                  <>
+                    <input
+                      type="text"
+                      className="input-field"
+                      value={editCatValue}
+                      onChange={(e) => setEditCatValue(e.target.value)}
+                      style={{ flex: 1, padding: '0.4rem 0.6rem' }}
+                      autoFocus
+                    />
+                    <button type="button" className="btn btn-primary" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={() => {
+                      if (editCatValue.trim() && editCatValue.trim() !== cat) {
+                        const oldName = cat;
+                        const newName = editCatValue.trim();
+                        // Update in categories list
+                        setCategories(prev => prev.map(c => c === oldName ? newName : c));
+                        // Update all existing transactions with this category
+                        (transactions || []).forEach(t => {
+                          if (t.category === oldName) {
+                            updateTransaction(t.id, { category: newName });
+                          }
+                        });
+                        // Update form if currently selected
+                        if (form.category === oldName) setField('category', newName);
+                      }
+                      setEditCatIdx(-1);
+                    }}>บันทึก</button>
+                    <button type="button" className="btn btn-outline" style={{ padding: '0.3rem 0.75rem', fontSize: '0.8rem' }} onClick={() => setEditCatIdx(-1)}>ยกเลิก</button>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ flex: 1, fontSize: '0.9rem' }}>{cat}</span>
+                    <button type="button" className={styles.actionBtn} title="แก้ไข" onClick={() => { setEditCatIdx(idx); setEditCatValue(cat); }}>
+                      <Edit size={14} />
+                    </button>
+                    <button type="button" className={`${styles.actionBtn} ${styles.actionBtnDanger}`} title="ลบ" onClick={() => {
+                      if (confirm(`ลบหมวดหมู่ "${cat}" ? รายการที่ใช้หมวดหมู่นี้จะถูกเปลี่ยนเป็น "Other"`)) {
+                        setCategories(prev => prev.filter(c => c !== cat));
+                        (transactions || []).forEach(t => {
+                          if (t.category === cat) {
+                            updateTransaction(t.id, { category: 'Other' });
+                          }
+                        });
+                        if (form.category === cat) setField('category', 'Other');
+                      }
+                    }}>
+                      <Trash2 size={14} />
+                    </button>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+          <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
+            <button className="btn btn-primary" onClick={() => { setIsCategoryManageOpen(false); setEditCatIdx(-1); }}>เสร็จสิ้น (Done)</button>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   );
 }

@@ -1,0 +1,42 @@
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  padding-top: calc(0.4rem + env(safe-area-inset-top));
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg-card);
+  color: var(--text-muted);
+}
+
+.ok .icon { color: var(--secondary); }
+.warn { background: #fef3c7; color: #92400e; }
+.error { background: #fee2e2; color: #991b1b; }
+.busy .icon { color: var(--primary); }
+
+.icon { display: flex; }
+.text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 0.5rem;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.btn:active { background: rgb(0 0 0 / 0.08); }
+.btn:disabled { opacity: 0.4; }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

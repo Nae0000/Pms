@@ -247,4 +247,16 @@
     padding: 0;
     overflow-x: hidden;
   }
+
+  /* Empty state styling override for mobile */
+  .roomTable td[colspan] {
+    display: block;
+    text-align: center;
+    border: none;
+    padding: 2rem 1rem;
+  }
+  
+  .roomTable td[colspan]::before {
+    content: none;
+  }
 }

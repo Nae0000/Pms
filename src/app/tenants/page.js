@@ -235,6 +235,7 @@ export default function TenantsPage() {
   );
 
   return (
+    <>
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
         <h1 className="page-title">การจัดการผู้เช่า (Tenant Management)</h1>
@@ -288,7 +289,7 @@ export default function TenantsPage() {
                       <div className={styles.avatar}>{(t.name || "?").charAt(0).toUpperCase()}</div>
                       <div className={styles.tenantNameBlock}>
                         <strong>{t.name}</strong>
-                        {t.nickname && <span className={styles.tenantNickname}>"{t.nickname}"</span>}
+                        {t.nickname && <span className={styles.tenantNickname}>&quot;{t.nickname}&quot;</span>}
                       </div>
                     </div>
                   </td>
@@ -321,123 +322,124 @@ export default function TenantsPage() {
           </table>
         </div>
       </div>
-
-      {/* Add Modal */}
-      {isAddModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content-lg glass" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>เพิ่มผู้เช่าใหม่ (Add New Tenant)</h2>
-              <button onClick={() => setIsAddModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
-            </div>
-            <form onSubmit={handleSaveAdd} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-              <div style={{ flex: '1 1 auto', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {renderFormFields()}
-              </div>
-              <div style={BTNS}>
-                <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsAddModalOpen(false)}>ยกเลิก</button>
-                <button type="submit" className="btn btn-primary" style={FLEX1}>เพิ่มผู้เช่า</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {isEditModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content-lg glass" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>แก้ไขข้อมูลผู้เช่า (Edit Tenant)</h2>
-              <button onClick={() => setIsEditModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
-            </div>
-            <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-              <div style={{ flex: '1 1 auto', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                {renderFormFields()}
-              </div>
-              <div style={BTNS}>
-                <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsEditModalOpen(false)}>ยกเลิก</button>
-                <button type="submit" className="btn btn-primary" style={FLEX1}>บันทึก (Save)</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Detail View Modal */}
-      {isDetailModalOpen && viewingTenant && (
-        <div className="modal-overlay" onClick={() => setIsDetailModalOpen(false)}>
-          <div className="modal-content-lg glass" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <div className={styles.avatar} style={{ width: 48, height: 48, fontSize: '1.1rem' }}>{(viewingTenant.name || "?").charAt(0).toUpperCase()}</div>
-                <div>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>{viewingTenant.name}</h2>
-                  {viewingTenant.nickname && <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>"{viewingTenant.nickname}"</span>}
-                </div>
-              </div>
-              <button onClick={() => setIsDetailModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
-            </div>
-            <div style={{ flex: '1 1 auto', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1rem' }}>
-              <div className={styles.detailGrid}>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>ห้อง</span><span className={styles.detailValue}>{viewingTenant.room || '-'}</span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>สถานะ</span><span className={styles.detailValue}><span className={`badge ${viewingTenant.status === 'Active' ? 'badge-success' : 'badge-neutral'}`}>{viewingTenant.status}</span></span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>เพศ</span><span className={styles.detailValue}>{viewingTenant.gender || '-'}</span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>อายุ</span><span className={styles.detailValue}>{viewingTenant.age || '-'}</span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>วันเกิด</span><span className={styles.detailValue}>{viewingTenant.dob || '-'}</span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>จังหวัด</span><span className={styles.detailValue}>{viewingTenant.province || '-'}</span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>โทรศัพท์</span><span className={styles.detailValue}>{viewingTenant.phone || '-'}</span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>อีเมล</span><span className={styles.detailValue}>{viewingTenant.email || '-'}</span></div>
-                <div className={`${styles.detailItem} ${styles.detailFull}`}><span className={styles.detailLabel}>ช่องทางติดต่ออื่น</span><span className={styles.detailValue}>{viewingTenant.socialContact || '-'}</span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>อาชีพ</span><span className={styles.detailValue}>{viewingTenant.occupation || '-'}</span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>รายได้</span><span className={styles.detailValue}>{viewingTenant.income || '-'}</span></div>
-                <div className={`${styles.detailItem} ${styles.detailFull}`}><span className={styles.detailLabel}>สถานที่ทำงาน</span><span className={styles.detailValue}>{viewingTenant.workplace || '-'}</span></div>
-                <div className={styles.detailItem}><span className={styles.detailLabel}>สิ้นสุดสัญญา</span><span className={styles.detailValue}>{viewingTenant.contractEnd || '-'}</span></div>
-              </div>
-            </div>
-            <div style={BTNS}>
-              <button className="btn btn-outline" style={FLEX1} onClick={() => { setIsDetailModalOpen(false); handleEditClick(viewingTenant); }}>
-                <Edit size={16} /> แก้ไข (Edit)
-              </button>
-              <button className="btn btn-outline" style={FLEX1} onClick={() => setIsDetailModalOpen(false)}>ปิด (Close)</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Import Modal */}
-      {isImportModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content-lg glass" onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>นำเข้าจากฟอร์ม ({importData.length} รายการ)</h2>
-              <button onClick={() => setIsImportModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
-            </div>
-            <div className={styles.importActions}>
-              <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.3rem 0.75rem' }} onClick={() => setSelectedImports(new Set(importData.map((_, i) => i)))}>เลือกทั้งหมด</button>
-              <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.3rem 0.75rem' }} onClick={() => setSelectedImports(new Set())}>ยกเลิกทั้งหมด</button>
-              <span className={styles.importCount}>{selectedImports.size} selected</span>
-            </div>
-            <div className={styles.importList}>
-              {importData.map((item, idx) => (
-                <div key={idx} className={styles.importItem}>
-                  <input type="checkbox" checked={selectedImports.has(idx)} onChange={() => toggleImportSelect(idx)} />
-                  <div className={styles.importItemInfo}>
-                    <span className={styles.importItemName}>{item.name} {item.nickname ? `"${item.nickname}"` : ''}</span>
-                    <span className={styles.importItemMeta}>ห้อง {item.room} · {item.phone} · {item.occupation || '-'} · {item.gender || '-'}, {item.age || '-'}ปี</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div style={BTNS}>
-              <button className="btn btn-outline" style={FLEX1} onClick={() => setIsImportModalOpen(false)}>ยกเลิก</button>
-              <button className="btn btn-primary" style={FLEX1} onClick={handleImportSelected} disabled={selectedImports.size === 0}>
-                นำเข้า {selectedImports.size} รายการ
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+
+    {/* Add Modal */}
+    {isAddModalOpen && (
+      <div className="modal-overlay">
+        <div className="modal-content-lg glass" onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>เพิ่มผู้เช่าใหม่ (Add New Tenant)</h2>
+            <button onClick={() => setIsAddModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
+          </div>
+          <form onSubmit={handleSaveAdd} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <div style={{ flex: '1 1 auto', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {renderFormFields()}
+            </div>
+            <div style={BTNS}>
+              <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsAddModalOpen(false)}>ยกเลิก</button>
+              <button type="submit" className="btn btn-primary" style={FLEX1}>เพิ่มผู้เช่า</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+
+    {/* Edit Modal */}
+    {isEditModalOpen && (
+      <div className="modal-overlay">
+        <div className="modal-content-lg glass" onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>แก้ไขข้อมูลผู้เช่า (Edit Tenant)</h2>
+            <button onClick={() => setIsEditModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
+          </div>
+          <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+            <div style={{ flex: '1 1 auto', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {renderFormFields()}
+            </div>
+            <div style={BTNS}>
+              <button type="button" className="btn btn-outline" style={FLEX1} onClick={() => setIsEditModalOpen(false)}>ยกเลิก</button>
+              <button type="submit" className="btn btn-primary" style={FLEX1}>บันทึก (Save)</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )}
+
+    {/* Detail View Modal */}
+    {isDetailModalOpen && viewingTenant && (
+      <div className="modal-overlay" onClick={() => setIsDetailModalOpen(false)}>
+        <div className="modal-content-lg glass" onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <div className={styles.avatar} style={{ width: 48, height: 48, fontSize: '1.1rem' }}>{(viewingTenant.name || "?").charAt(0).toUpperCase()}</div>
+              <div>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>{viewingTenant.name}</h2>
+                {viewingTenant.nickname && <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>&quot;{viewingTenant.nickname}&quot;</span>}
+              </div>
+            </div>
+            <button onClick={() => setIsDetailModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
+          </div>
+          <div style={{ flex: '1 1 auto', overflowY: 'auto', paddingRight: '0.5rem', marginBottom: '1rem' }}>
+            <div className={styles.detailGrid}>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>ห้อง</span><span className={styles.detailValue}>{viewingTenant.room || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>สถานะ</span><span className={styles.detailValue}><span className={`badge ${viewingTenant.status === 'Active' ? 'badge-success' : 'badge-neutral'}`}>{viewingTenant.status}</span></span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>เพศ</span><span className={styles.detailValue}>{viewingTenant.gender || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>อายุ</span><span className={styles.detailValue}>{viewingTenant.age || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>วันเกิด</span><span className={styles.detailValue}>{viewingTenant.dob || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>จังหวัด</span><span className={styles.detailValue}>{viewingTenant.province || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>โทรศัพท์</span><span className={styles.detailValue}>{viewingTenant.phone || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>อีเมล</span><span className={styles.detailValue}>{viewingTenant.email || '-'}</span></div>
+              <div className={`${styles.detailItem} ${styles.detailFull}`}><span className={styles.detailLabel}>ช่องทางติดต่ออื่น</span><span className={styles.detailValue}>{viewingTenant.socialContact || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>อาชีพ</span><span className={styles.detailValue}>{viewingTenant.occupation || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>รายได้</span><span className={styles.detailValue}>{viewingTenant.income || '-'}</span></div>
+              <div className={`${styles.detailItem} ${styles.detailFull}`}><span className={styles.detailLabel}>สถานที่ทำงาน</span><span className={styles.detailValue}>{viewingTenant.workplace || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>สิ้นสุดสัญญา</span><span className={styles.detailValue}>{viewingTenant.contractEnd || '-'}</span></div>
+            </div>
+          </div>
+          <div style={BTNS}>
+            <button className="btn btn-outline" style={FLEX1} onClick={() => { setIsDetailModalOpen(false); handleEditClick(viewingTenant); }}>
+              <Edit size={16} /> แก้ไข (Edit)
+            </button>
+            <button className="btn btn-outline" style={FLEX1} onClick={() => setIsDetailModalOpen(false)}>ปิด (Close)</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Import Modal */}
+    {isImportModalOpen && (
+      <div className="modal-overlay">
+        <div className="modal-content-lg glass" onClick={e => e.stopPropagation()}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '600' }}>นำเข้าจากฟอร์ม ({importData.length} รายการ)</h2>
+            <button onClick={() => setIsImportModalOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={20} /></button>
+          </div>
+          <div className={styles.importActions}>
+            <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.3rem 0.75rem' }} onClick={() => setSelectedImports(new Set(importData.map((_, i) => i)))}>เลือกทั้งหมด</button>
+            <button className="btn btn-outline" style={{ fontSize: '0.8rem', padding: '0.3rem 0.75rem' }} onClick={() => setSelectedImports(new Set())}>ยกเลิกทั้งหมด</button>
+            <span className={styles.importCount}>{selectedImports.size} selected</span>
+          </div>
+          <div className={styles.importList}>
+            {importData.map((item, idx) => (
+              <div key={idx} className={styles.importItem}>
+                <input type="checkbox" checked={selectedImports.has(idx)} onChange={() => toggleImportSelect(idx)} />
+                <div className={styles.importItemInfo}>
+                  <span className={styles.importItemName}>{item.name} {item.nickname ? `"${item.nickname}"` : ''}</span>
+                  <span className={styles.importItemMeta}>ห้อง {item.room} · {item.phone} · {item.occupation || '-'} · {item.gender || '-'}, {item.age || '-'}ปี</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={BTNS}>
+            <button className="btn btn-outline" style={FLEX1} onClick={() => setIsImportModalOpen(false)}>ยกเลิก</button>
+            <button className="btn btn-primary" style={FLEX1} onClick={handleImportSelected} disabled={selectedImports.size === 0}>
+              นำเข้า {selectedImports.size} รายการ
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </>
   );
 }
