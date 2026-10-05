@@ -135,7 +135,14 @@ export function healthCheck({ rooms = [], tenants = [], transactions = [] }) {
     if (isBlank(tenant.room)) return;
     const room = findRoom(rooms, tenant.room);
     if (!room) {
-      if (tenant.status === "Active") missingRooms.set(String(tenant.room).trim(), tenant);
+      if (tenant.status !== "Active") return;
+      const label = String(tenant.room).trim();
+      if (numericLike(label) && roomKey(label).length < 3) {
+        // e.g. just "56": not a real room number, a person has to look at the questionnaire
+        add({ kind: "bad-room-label", level: "warn", title: `${tenant.name}: เลขห้อง "${label}" ไม่ครบ`, detail: "แก้ช่อง room ของผู้เช่าคนนี้ให้เป็นเลขห้องจริง" });
+        return;
+      }
+      missingRooms.set(label, tenant);
       return;
     }
     if (tenant.status === "Active") {
@@ -166,16 +173,18 @@ export function healthCheck({ rooms = [], tenants = [], transactions = [] }) {
   });
   if (missingRooms.size) {
     const list = [...missingRooms.entries()];
+    // follow the naming the owner already uses: bare numbers ("853") or with the building ("56/853")
+    const bareStyle = rooms.some((r) => numericLike(r.name) && !String(r.name).includes("/"));
+    const nameFor = (label) => (bareStyle && numericLike(label) && roomKey(label).length >= 3 ? roomKey(label) : label);
     add({
       kind: "create-rooms",
       level: "fix",
       title: `ยังไม่มีห้องในระบบ ${list.length} ห้อง (มีผู้เช่าอยู่ตามแบบสอบถาม)`,
-      detail: `จะสร้างห้องให้และใส่ผู้เช่าให้เลย: ${list.map(([label]) => label).slice(0, 12).join(", ")}${list.length > 12 ? " ..." : ""} (ค่าเช่า/ประเภท กรอกทีหลังได้)`,
-      ops: list.map(([label, tenant]) => ({
-        insert: true,
-        table: "rooms",
-        data: { name: label, type: "", price: "0", status: "occupied", tenant: tenant.name },
-      })),
+      detail: `จะสร้างห้องให้และใส่ผู้เช่าให้เลย: ${list.map(([label]) => nameFor(label)).slice(0, 12).join(", ")}${list.length > 12 ? " ..." : ""} (ค่าเช่า/ประเภท กรอกทีหลังได้)`,
+      ops: list.flatMap(([label, tenant]) => [
+        { insert: true, table: "rooms", data: { name: nameFor(label), type: "", price: "0", status: "occupied", tenant: tenant.name } },
+        { table: "tenants", id: tenant.id, data: { room: nameFor(label) } },
+      ]),
     });
   }
 
