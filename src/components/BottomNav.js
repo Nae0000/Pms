@@ -7,12 +7,14 @@ import {
   Home, 
   Users, 
   Wallet,
+  Receipt,
   CalendarDays
 } from "lucide-react";
 import styles from "./BottomNav.module.css";
 
 const navItems = [
   { name: "หน้าหลัก", href: "/", icon: LayoutDashboard },
+  { name: "ค่าเช่า", href: "/monthly", icon: Receipt },
   { name: "ห้องพัก", href: "/rooms", icon: Home },
   { name: "ผู้เช่า", href: "/tenants", icon: Users },
   { name: "การเงิน", href: "/finances", icon: Wallet },

@@ -12,17 +12,19 @@ const API_KEY = 'CHANGE_ME';
 const SCHEMA = {
   Rooms: {
     title: 'ห้องพัก',
-    cols: ['id', 'name', 'type', 'price', 'status', 'tenant', 'image'],
-    labels: ['รหัส', 'ชื่อห้อง', 'ประเภท', 'ค่าเช่า/เดือน', 'สถานะ', 'ผู้เช่า', 'รูป'],
-    widths: [110, 220, 100, 110, 110, 180, 120],
+    cols: ['id', 'name', 'type', 'price', 'status', 'tenant', 'image',
+           'deposit', 'floor', 'size', 'amenities', 'note'],
+    labels: ['รหัส', 'ชื่อห้อง', 'ประเภท', 'ค่าเช่า/เดือน', 'สถานะ', 'ผู้เช่า', 'รูป (ลิงก์รูป/Google Drive)',
+             'เงินประกัน', 'ชั้น', 'ขนาด (ตร.ม.)', 'สิ่งอำนวยความสะดวก', 'หมายเหตุ'],
+    widths: [110, 220, 100, 110, 110, 180, 260, 100, 60, 90, 240, 220],
   },
   Tenants: {
     title: 'ผู้เช่า',
     cols: ['id', 'name', 'nickname', 'dob', 'age', 'gender', 'room', 'phone', 'email', 'social_contact',
-           'occupation', 'workplace', 'status', 'contract_end', 'income', 'province', 'created_at'],
+           'occupation', 'workplace', 'status', 'start_date', 'contract_end', 'due_day', 'income', 'province', 'created_at'],
     labels: ['รหัส', 'ชื่อ-สกุล', 'ชื่อเล่น', 'วันเกิด', 'อายุ', 'เพศ', 'ห้อง', 'โทรศัพท์', 'อีเมล', 'ช่องทางติดต่อ',
-             'อาชีพ', 'สถานที่ทำงาน', 'สถานะ', 'สิ้นสุดสัญญา', 'รายได้', 'จังหวัด', 'สร้างเมื่อ'],
-    widths: [110, 200, 90, 100, 60, 70, 110, 120, 180, 150, 140, 180, 90, 110, 100, 110, 150],
+             'อาชีพ', 'สถานที่ทำงาน', 'สถานะ', 'เริ่มสัญญา (yyyy-mm-dd)', 'สิ้นสุดสัญญา (yyyy-mm-dd)', 'วันครบกำหนดจ่าย (1-31)', 'รายได้', 'จังหวัด', 'สร้างเมื่อ'],
+    widths: [110, 200, 90, 100, 60, 70, 110, 120, 180, 150, 140, 180, 90, 130, 130, 120, 100, 110, 150],
   },
   Transactions: {
     title: 'การเงิน',

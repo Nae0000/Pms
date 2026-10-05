@@ -6,7 +6,8 @@ import {
   LayoutDashboard, 
   Home, 
   Users, 
-  Wallet, 
+  Wallet,
+  Receipt, 
   CalendarDays,
   Building
 } from "lucide-react";
@@ -14,6 +15,7 @@ import styles from "./Sidebar.module.css";
 
 const navItems = [
   { name: "หน้าหลัก (Dashboard)", href: "/", icon: LayoutDashboard },
+  { name: "ค่าเช่ารายเดือน", href: "/monthly", icon: Receipt },
   { name: "ห้องพัก (Rooms)", href: "/rooms", icon: Home },
   { name: "ผู้เช่า (Tenants)", href: "/tenants", icon: Users },
   { name: "การเงิน (Finances)", href: "/finances", icon: Wallet },

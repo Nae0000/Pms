@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import * as api from '../../lib/sheetsApi';
 
 const DataContext = createContext();
@@ -88,12 +88,15 @@ export const DataProvider = ({ children }) => {
   const [saveError, setSaveError] = useState("");
   const [pending, setPending] = useState(0);
 
-  const fetchData = async () => {
+  const lastFetch = useRef(0);
+  const writing = useRef(0);
+
+  const fetchData = async (silent = false) => {
     if (!api.isConfigured) {
       setIsInitialLoading(false);
       return;
     }
-    setIsInitialLoading(true);
+    if (!silent) setIsInitialLoading(true);
     try {
       const data = await api.fetchAll();
       setRooms((data.rooms || []).map(r => ({ ...r, status: r.status || 'available', tenant: r.tenant || '-' })));
@@ -104,8 +107,9 @@ export const DataProvider = ({ children }) => {
       setLoadError("");
     } catch (err) {
       console.error("Error loading data:", err);
-      setLoadError(errMsg(err));
+      if (!silent) setLoadError(errMsg(err));
     }
+    lastFetch.current = Date.now();
     setIsInitialLoading(false);
   };
 
@@ -113,9 +117,21 @@ export const DataProvider = ({ children }) => {
     fetchData();
   }, []);
 
+  // Pick up edits made directly in the Google Sheet when the user comes back to the app.
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && !writing.current && Date.now() - lastFetch.current > 20000) {
+        fetchData(true);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
   // Run a write; on failure surface it and reload so the UI matches the sheet.
   const run = async (fn) => {
     setPending(n => n + 1);
+    writing.current += 1;
     setSaveError("");
     try {
       return await fn();
@@ -125,6 +141,7 @@ export const DataProvider = ({ children }) => {
       fetchData();
       return null;
     } finally {
+      writing.current -= 1;
       setPending(n => n - 1);
     }
   };
@@ -232,7 +249,7 @@ export const DataProvider = ({ children }) => {
       tenants, setTenants, updateTenant, addTenant, addMultipleTenants, deleteTenant,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       importFromGoogleSheets, importLoading, isInitialLoading,
-      loadError, saveError, setSaveError, saving: pending > 0, refresh: fetchData
+      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData()
     }}>
       {children}
     </DataContext.Provider>

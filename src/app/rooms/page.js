@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Plus, Search, Filter, Edit, X, Info, LayoutGrid, List } from "lucide-react";
 import styles from "./page.module.css";
+import { roomImageSrc, PLACEHOLDER_IMG } from "@/lib/image";
 import { useData } from "../context/DataContext";
 
 export default function RoomsPage() {
@@ -185,7 +186,7 @@ export default function RoomsPage() {
           {filteredRooms.map((room) => (
             <div key={room.id} className={`card glass ${styles.roomCard}`}>
               <div className={styles.roomImageContainer}>
-                <img src={room.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"} alt={room.name} className={styles.roomImage} />
+                <img src={roomImageSrc(room.image) || PLACEHOLDER_IMG} alt={room.name} className={styles.roomImage} />
               </div>
               <div className={styles.roomHeader}>
                 <h2>{room.name || `Room ${room.id}`}</h2>
@@ -242,7 +243,7 @@ export default function RoomsPage() {
                     <tr key={room.id}>
                       <td data-label="รูป (Image)">
                         <img 
-                          src={room.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=150&q=80"} 
+                          src={roomImageSrc(room.image, 200) || PLACEHOLDER_IMG} 
                           alt={room.name} 
                           style={{ width: "60px", height: "40px", objectFit: "cover", borderRadius: "4px" }} 
                         />
@@ -548,7 +549,7 @@ export default function RoomsPage() {
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <div className={styles.roomImageContainer} style={{ margin: '0 0 1rem 0', borderRadius: 'var(--radius-lg)' }}>
-              <img src={viewingRoom.image || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"} alt={viewingRoom.name} className={styles.roomImage} />
+              <img src={roomImageSrc(viewingRoom.image) || PLACEHOLDER_IMG} alt={viewingRoom.name} className={styles.roomImage} />
             </div>
             <div>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>รหัสห้อง (Room ID)</p>
@@ -568,6 +569,25 @@ export default function RoomsPage() {
                 <p style={{ fontSize: '1rem', fontWeight: '500' }}>฿{viewingRoom.price}/เดือน</p>
               </div>
             </div>
+            {(viewingRoom.deposit || viewingRoom.floor || viewingRoom.size) && (
+              <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                {viewingRoom.deposit && <div><p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>เงินประกัน</p><p style={{ fontSize: '1rem', fontWeight: '500' }}>฿{viewingRoom.deposit}</p></div>}
+                {viewingRoom.floor && <div><p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ชั้น</p><p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.floor}</p></div>}
+                {viewingRoom.size && <div><p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ขนาด</p><p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.size} ตร.ม.</p></div>}
+              </div>
+            )}
+            {viewingRoom.amenities && (
+              <div>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>สิ่งอำนวยความสะดวก</p>
+                <p style={{ fontSize: '1rem' }}>{viewingRoom.amenities}</p>
+              </div>
+            )}
+            {viewingRoom.note && (
+              <div>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>หมายเหตุ</p>
+                <p style={{ fontSize: '1rem' }}>{viewingRoom.note}</p>
+              </div>
+            )}
             <div>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>สถานะ (Status)</p>
               <span className={`badge ${
