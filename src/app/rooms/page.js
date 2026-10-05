@@ -9,7 +9,7 @@ import { norm, isBlank } from "@/lib/links";
 import { useData } from "../context/DataContext";
 
 export default function RoomsPage() {
-  const { rooms, updateRoom, addRoom, tenants } = useData();
+  const { rooms, updateRoom, addRoom, deleteRoom, tenants } = useData();
   const activeTenants = (tenants || []).filter(t => t.status === 'Active');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -667,7 +667,21 @@ export default function RoomsPage() {
             </div>
           </div>
 
-          <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+          <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              className="btn btn-outline"
+              style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+              onClick={() => {
+                const has = viewingRoom.tenant && viewingRoom.tenant !== '-';
+                const msg = `ลบห้อง ${viewingRoom.name} ?` + (has ? `\n\nผู้เช่า "${viewingRoom.tenant}" จะไม่ถูกลบ แต่ช่องห้องของเขาจะถูกเคลียร์` : '') + '\n\nการลบย้อนกลับไม่ได้';
+                if (window.confirm(msg)) {
+                  deleteRoom(viewingRoom.id);
+                  setIsDetailsModalOpen(false);
+                }
+              }}
+            >
+              ลบห้อง
+            </button>
             <button className="btn btn-primary" onClick={() => setIsDetailsModalOpen(false)}>
               ปิด (Close)
             </button>

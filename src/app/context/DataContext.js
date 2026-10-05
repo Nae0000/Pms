@@ -372,6 +372,17 @@ export const DataProvider = ({ children }) => {
     return { added: rows.length, skipped };
   };
 
+  // Deleting a room clears the room field of anyone recorded in it (their own data is kept).
+  const deleteRoom = async (id) => {
+    const room = rooms.find(r => r.id === id);
+    if (!room) return;
+    setRooms(prev => prev.filter(r => r.id !== id));
+    const ops = tenants
+      .filter(t => !isBlank(t.room) && findRoom([room], t.room)?.id === id)
+      .map(t => ({ table: 'tenants', id: t.id, data: { room: '-' } }));
+    await commit(ops, () => api.deleteRow('rooms', id));
+  };
+
   const deleteTenant = async (id) => {
     const tenant = tenants.find(t => t.id === id);
     setTenants(prev => prev.filter(t => t.id !== id));
@@ -457,7 +468,7 @@ export const DataProvider = ({ children }) => {
       tenants, setTenants, updateTenant, addTenant, addMultipleTenants, deleteTenant,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       importFromGoogleSheets, importLoading, isInitialLoading,
-      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, isRefreshing, syncing, syncFromForm
+      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, deleteRoom, isRefreshing, syncing, syncFromForm
     }}>
       {children}
     </DataContext.Provider>
