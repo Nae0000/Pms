@@ -218,6 +218,21 @@ function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
     if (body.key !== API_KEY) return out_({ ok: false, error: 'unauthorized' });
+    if (body.action === 'deleteMany') {
+      const nm = tableName_(body.table);
+      const shd = SpreadsheetApp.getActive().getSheetByName(nm);
+      const ids = (body.ids || []).map(String);
+      const lastRow = shd.getLastRow();
+      let deleted = 0;
+      if (lastRow >= 3) {
+        const idv = shd.getRange(3, 1, lastRow - 2, 1).getDisplayValues();
+        for (let i = idv.length - 1; i >= 0; i--) {   // bottom-up so row numbers stay valid
+          if (ids.indexOf(String(idv[i][0])) >= 0) { shd.deleteRow(i + 3); deleted++; }
+        }
+      }
+      return out_({ ok: true, deleted: deleted });
+    }
+
     if (body.action === 'syncForm') {
       return out_(Object.assign({ ok: true }, syncForm_()));
     }
@@ -309,6 +324,13 @@ function phone_(raw) {
   return d;
 }
 
+// digits of a room number without the building prefix: "56/853", "56 / 853", "56853", "853" -> "853"
+function roomKey_(raw) {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (d.length >= 5 && d.indexOf('56') === 0) d = d.slice(2);
+  return d;
+}
+
 function isBlank_(v) {
   const s = String(v == null ? '' : v).trim();
   return s === '' || s === '-';
@@ -321,15 +343,24 @@ function syncForm_() {
   if (!sheet) sheet = src.getSheets()[0];
 
   const vals = sheet.getDataRange().getDisplayValues();
-  const rows = vals.slice(1).filter(function (r) { return String(r[2] || '').trim(); });
+  const allRows = vals.slice(1).filter(function (r) { return String(r[2] || '').trim(); });
 
-  const lastByRoom = {};
-  const lastByName = {};
-  rows.forEach(function (r, i) {
-    const k = roomLabel_(r[1]);
-    if (k) lastByRoom[k] = i;
-    lastByName[normName_(r[2])] = i;
+  // The questionnaire also covers rooms owned by other people. Only customers of the rooms listed in
+  // the Rooms tab (the owner's own rooms) are imported.
+  const owned = {};
+  readTable_('Rooms').forEach(function (r) {
+    const k = roomKey_(r.name);
+    if (k.length >= 3) owned[k] = true;
   });
+
+  // "latest answer per room" is judged on every answer, before filtering
+  const latestIdxByRoom = {};
+  allRows.forEach(function (r, i) { const k = roomKey_(r[1]); if (k) latestIdxByRoom[k] = i; });
+  const isLatestForRoom = function (row) { return latestIdxByRoom[roomKey_(row[1])] === allRows.indexOf(row); };
+
+  const rows = allRows.filter(function (r) { return owned[roomKey_(r[1])]; });
+  const lastByName = {};
+  rows.forEach(function (r, i) { lastByName[normName_(r[2])] = i; });
 
   const existing = {};
   readTable_('Tenants').forEach(function (t) { existing[normName_(t.name)] = t; });
@@ -349,7 +380,7 @@ function syncForm_() {
     };
     const cur = existing[key];
     if (!cur) {
-      rec.status = lastByRoom[rec.room] === i ? 'Active' : 'Past';
+      rec.status = isLatestForRoom(r) ? 'Active' : 'Past';
       rec.email = '-';
       inserts.push(rec);
       return;
@@ -382,5 +413,5 @@ function syncForm_() {
     tsh.getRange(rw, 1, 1, def.cols.length).setValues([toRow_(def, u.patch, cur)]);
   });
 
-  return { added: inserts.length, updated: updates.length, total: rows.length };
+  return { added: inserts.length, updated: updates.length, total: rows.length, skippedOtherRooms: allRows.length - rows.length };
 }
