@@ -20,7 +20,7 @@ const todayStr = () => {
 const isRent = (t) => t.type === "income" && /^(rent|ค่าเช่า)/i.test(t.category || "");
 
 export default function MonthlyPage() {
-  const { rooms, tenants, transactions, addTransaction, updateTransaction, isInitialLoading } = useData();
+  const { rooms, tenants, transactions, addTransaction, deleteTransaction, isInitialLoading } = useData();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
@@ -94,8 +94,9 @@ export default function MonthlyPage() {
 
   const undo = (it) => {
     const last = it.payments[it.payments.length - 1];
-    if (last && confirm(`ยกเลิกรายการรับชำระ ${baht(num(last.amount))} ของ ${it.room.name} ?`)) {
-      updateTransaction(last.id, { status: "Cancelled" });
+    // Undo = remove the payment row (the sheet's status list has no "cancelled" value)
+    if (last && confirm(`ลบรายการรับชำระ ${baht(num(last.amount))} ของ ${it.room.name} ?`)) {
+      deleteTransaction(last.id);
     }
   };
 

@@ -74,14 +74,14 @@ function setup() {
   addValidation_(ss.getSheetByName('Rooms'), 'status', ['available', 'occupied', 'reserved', 'maintenance']);
   addValidation_(ss.getSheetByName('Tenants'), 'status', ['Active', 'Past']);
   addValidation_(ss.getSheetByName('Transactions'), 'type', ['income', 'expense']);
-  addValidation_(ss.getSheetByName('Transactions'), 'status', ['Paid', 'Pending', 'Overdue']);
+  addValidation_(ss.getSheetByName('Transactions'), 'status', ['Paid', 'Pending', 'Overdue', 'Cancelled']);
   addValidation_(ss.getSheetByName('Transactions'), 'expense_type', ['fixed', 'variable']);
 
   statusColors_(ss.getSheetByName('Rooms'), 'status', {
     available: '#d1fae5', occupied: '#fee2e2', reserved: '#dbeafe', maintenance: '#fef3c7',
   });
   statusColors_(ss.getSheetByName('Transactions'), 'status', {
-    Paid: '#d1fae5', Pending: '#fef3c7', Overdue: '#fee2e2',
+    Paid: '#d1fae5', Pending: '#fef3c7', Overdue: '#fee2e2', Cancelled: '#e2e8f0',
   });
   statusColors_(ss.getSheetByName('Tenants'), 'status', { Active: '#d1fae5', Past: '#e2e8f0' });
 
@@ -100,7 +100,7 @@ function colIndex_(sheetName, key) {
 function addValidation_(sh, key, values) {
   const sheetName = sh.getName();
   const c = colIndex_(sheetName, key);
-  const rule = SpreadsheetApp.newDataValidation().requireValueInList(values, true).setAllowInvalid(false).build();
+  const rule = SpreadsheetApp.newDataValidation().requireValueInList(values, true).setAllowInvalid(true).build(); // warn only: never block writes from the app
   sh.getRange(3, c, sh.getMaxRows() - 2, 1).setDataValidation(rule);
 }
 
