@@ -14,11 +14,11 @@ const BTNS = { display: 'flex', gap: '1rem', marginTop: '1rem' };
 const emptyForm = () => ({
   name: "", nickname: "", dob: "", age: "", gender: "", room: "", phone: "",
   email: "", socialContact: "", occupation: "", workplace: "", status: "Active",
-  contractEnd: "", income: "", province: ""
+  contractEnd: "", income: "", province: "", start_date: "", move_out_date: ""
 });
 
 export default function TenantsPage() {
-  const { tenants, addTenant, addMultipleTenants, updateTenant, deleteTenant, rooms, importFromGoogleSheets, importLoading, isInitialLoading } = useData();
+  const { tenants, addTenant, addMultipleTenants, updateTenant, deleteTenant, rooms, syncFromForm, syncing, isInitialLoading } = useData();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -54,23 +54,30 @@ export default function TenantsPage() {
       phone: tenant.phone || "", email: tenant.email === "-" ? "" : (tenant.email || ""),
       socialContact: tenant.socialContact || "", occupation: tenant.occupation || "",
       workplace: tenant.workplace || "", status: tenant.status === "Past" ? "Past" : "Active",
-      contractEnd: tenant.contractEnd || "", income: tenant.income || "", province: tenant.province || ""
+      contractEnd: tenant.contractEnd || "", income: tenant.income || "", province: tenant.province || "",
+      start_date: tenant.start_date || "", move_out_date: tenant.move_out_date || ""
     });
     setIsEditModalOpen(true);
   };
 
   const handleViewClick = (tenant) => { setViewingTenant(tenant); setIsDetailModalOpen(true); };
 
+  // A move-out date on or before today means the tenant has left: status becomes Past (this also frees the room).
+  const withMoveOut = (f) => {
+    const today = new Date().toISOString().slice(0, 10);
+    return f.move_out_date && f.move_out_date <= today ? { ...f, status: "Past" } : f;
+  };
+
   const handleSaveAdd = (e) => {
     e.preventDefault();
-    addTenant({ ...form, room: form.room || "-", email: form.email || "-" });
+    addTenant(withMoveOut({ ...form, room: form.room || "-", email: form.email || "-" }));
     setIsAddModalOpen(false);
   };
 
   const handleSaveEdit = (e) => {
     e.preventDefault();
     if (editingTenant) {
-      updateTenant(editingTenant.id, { ...form, room: form.room || "-", email: form.email || "-" });
+      updateTenant(editingTenant.id, withMoveOut({ ...form, room: form.room || "-", email: form.email || "-" }));
       setIsEditModalOpen(false);
     }
   };
@@ -80,9 +87,8 @@ export default function TenantsPage() {
   };
 
   const handleImportClick = async () => {
-    const data = await importFromGoogleSheets();
-    if (data) { setImportData(data); setSelectedImports(new Set()); setIsImportModalOpen(true); }
-    else { alert("ไม่สามารถดึงข้อมูลจาก Google Sheets ได้"); }
+    const res = await syncFromForm(true);
+    if (res) alert(`ดึงจากแบบสอบถามแล้ว: เพิ่มผู้เช่าใหม่ ${res.added} ราย, เติมข้อมูลที่ว่าง ${res.updated} ราย (ทั้งหมดในแบบสอบถาม ${res.total} คำตอบ)`);
   };
 
   const toggleImportSelect = (idx) => {
@@ -233,9 +239,19 @@ export default function TenantsPage() {
               </select>
             </div>
           </div>
+          <div style={ROW2}>
+            <div style={FLEX1}>
+              <label style={LABEL}>วันเข้าพัก (Start)</label>
+              <input type="date" className="input-field" value={form.start_date} onChange={e => setField('start_date', e.target.value)} style={W100} />
+            </div>
+            <div style={FLEX1}>
+              <label style={LABEL}>สิ้นสุดสัญญา (End)</label>
+              <input type="date" className="input-field" value={form.contractEnd} onChange={e => setField('contractEnd', e.target.value)} style={W100} />
+            </div>
+          </div>
           <div>
-            <label style={LABEL}>สิ้นสุดสัญญา (Contract End)</label>
-            <input type="date" className="input-field" value={form.contractEnd} onChange={e => setField('contractEnd', e.target.value)} style={W100} />
+            <label style={LABEL}>ย้ายออกจริง (ถ้าออกก่อนหมดสัญญา)</label>
+            <input type="date" className="input-field" value={form.move_out_date} onChange={e => setField('move_out_date', e.target.value)} style={W100} />
           </div>
         </div>
       </div>
@@ -248,9 +264,9 @@ export default function TenantsPage() {
       <div className={styles.header}>
         <h1 className="page-title">การจัดการผู้เช่า<span className="en-title"> (Tenant Management)</span></h1>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <button className={styles.importBtn} onClick={handleImportClick} disabled={importLoading}>
+          <button className={styles.importBtn} onClick={handleImportClick} disabled={syncing}>
             <Download size={18} />
-            {importLoading ? 'กำลังโหลด...' : 'นำเข้าจากฟอร์ม (Import)'}
+            {syncing ? 'กำลังดึง...' : 'ดึงจากแบบสอบถาม'}
           </button>
           <button className="btn btn-primary" onClick={handleAddClick}>
             <Plus size={20} /> เพิ่มผู้เช่า (Add)
@@ -402,7 +418,9 @@ export default function TenantsPage() {
               <div className={styles.detailItem}><span className={styles.detailLabel}>อาชีพ</span><span className={styles.detailValue}>{viewingTenant.occupation || '-'}</span></div>
               <div className={styles.detailItem}><span className={styles.detailLabel}>รายได้</span><span className={styles.detailValue}>{viewingTenant.income || '-'}</span></div>
               <div className={`${styles.detailItem} ${styles.detailFull}`}><span className={styles.detailLabel}>สถานที่ทำงาน</span><span className={styles.detailValue}>{viewingTenant.workplace || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>วันเข้าพัก</span><span className={styles.detailValue}>{viewingTenant.start_date || '-'}</span></div>
               <div className={styles.detailItem}><span className={styles.detailLabel}>สิ้นสุดสัญญา</span><span className={styles.detailValue}>{viewingTenant.contractEnd || '-'}</span></div>
+              <div className={styles.detailItem}><span className={styles.detailLabel}>ย้ายออกจริง</span><span className={styles.detailValue}>{viewingTenant.move_out_date || '-'}</span></div>
             </div>
           </div>
           <div style={BTNS}>

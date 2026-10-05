@@ -24,10 +24,12 @@ const SCHEMA = {
   Tenants: {
     title: 'ผู้เช่า',
     cols: ['id', 'name', 'nickname', 'dob', 'age', 'gender', 'room', 'phone', 'email', 'social_contact',
-           'occupation', 'workplace', 'status', 'start_date', 'contract_end', 'due_day', 'income', 'province', 'created_at'],
+           'occupation', 'workplace', 'status', 'start_date', 'contract_end', 'due_day', 'income', 'province', 'created_at',
+           'move_out_date', 'form_ts'],
     labels: ['รหัส', 'ชื่อ-สกุล', 'ชื่อเล่น', 'วันเกิด', 'อายุ', 'เพศ', 'ห้อง', 'โทรศัพท์', 'อีเมล', 'ช่องทางติดต่อ',
-             'อาชีพ', 'สถานที่ทำงาน', 'สถานะ', 'เริ่มสัญญา (yyyy-mm-dd)', 'สิ้นสุดสัญญา (yyyy-mm-dd)', 'วันครบกำหนดจ่าย (1-31)', 'รายได้', 'จังหวัด', 'สร้างเมื่อ'],
-    widths: [110, 200, 90, 100, 60, 70, 110, 120, 180, 150, 140, 180, 90, 130, 130, 120, 100, 110, 150],
+             'อาชีพ', 'สถานที่ทำงาน', 'สถานะ', 'เริ่มสัญญา (yyyy-mm-dd)', 'สิ้นสุดสัญญา (yyyy-mm-dd)', 'วันครบกำหนดจ่าย (1-31)', 'รายได้', 'จังหวัด', 'สร้างเมื่อ',
+             'ย้ายออกจริง (yyyy-mm-dd)', 'เวลากรอกแบบสอบถาม'],
+    widths: [110, 200, 90, 100, 60, 70, 110, 120, 180, 150, 140, 180, 90, 130, 130, 120, 100, 110, 150, 150, 160],
   },
   Transactions: {
     title: 'การเงิน',
@@ -216,6 +218,10 @@ function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
     if (body.key !== API_KEY) return out_({ ok: false, error: 'unauthorized' });
+    if (body.action === 'syncForm') {
+      return out_(Object.assign({ ok: true }, syncForm_()));
+    }
+
     if (body.action === 'batch') {
       // many row updates in a single request (one lock, one round trip)
       const results = body.ops.map(function (op) {
@@ -272,4 +278,109 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+// ============ Customer questionnaire (Google Form) -> Tenants ============
+// The form's response sheet is the master list of every customer, old and new.
+// Rules: match people by name; add new people; for people already in Tenants only fill EMPTY cells,
+// so dates and anything typed by hand are never overwritten. The latest response per room is "Active",
+// earlier ones are "Past".
+const FORM_SHEET_ID = '1FofsFHPRNCSMybFGesAOSQzCE4eOTXbi0j0E-DZzRKQ';
+const FORM_GID = 557988720;
+const FORM_FILL_FIELDS = ['nickname', 'dob', 'phone', 'social_contact', 'age', 'gender', 'occupation', 'workplace', 'income', 'province'];
+
+function normName_(s) {
+  return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+// "56/853", "56 / 835", "56842", "836" -> "56/853", "56/835", "56/842", "56/836"
+function roomLabel_(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  let d = s.replace(/\D/g, '');
+  if (d.length >= 5 && d.indexOf('56') === 0) d = d.slice(2);
+  if (d.length >= 3 && /^[\d\s\/\-]+$/.test(s)) return '56/' + d;
+  return s;
+}
+
+function phone_(raw) {
+  let d = String(raw || '').replace(/\D/g, '');
+  if (d.length === 9 && d.charAt(0) !== '0') d = '0' + d;   // Sheets drops the leading zero of numbers
+  return d;
+}
+
+function isBlank_(v) {
+  const s = String(v == null ? '' : v).trim();
+  return s === '' || s === '-';
+}
+
+function syncForm_() {
+  const src = SpreadsheetApp.openById(FORM_SHEET_ID);
+  let sheet = null;
+  src.getSheets().forEach(function (sh) { if (sh.getSheetId() === FORM_GID) sheet = sh; });
+  if (!sheet) sheet = src.getSheets()[0];
+
+  const vals = sheet.getDataRange().getDisplayValues();
+  const rows = vals.slice(1).filter(function (r) { return String(r[2] || '').trim(); });
+
+  const lastByRoom = {};
+  const lastByName = {};
+  rows.forEach(function (r, i) {
+    const k = roomLabel_(r[1]);
+    if (k) lastByRoom[k] = i;
+    lastByName[normName_(r[2])] = i;
+  });
+
+  const existing = {};
+  readTable_('Tenants').forEach(function (t) { existing[normName_(t.name)] = t; });
+
+  const def = SCHEMA.Tenants;
+  const tsh = SpreadsheetApp.getActive().getSheetByName('Tenants');
+  const inserts = [];
+  const updates = [];
+
+  Object.keys(lastByName).sort(function (a, b) { return lastByName[a] - lastByName[b]; }).forEach(function (key) {
+    const i = lastByName[key];
+    const r = rows[i];
+    const rec = {
+      name: String(r[2]).trim(), nickname: r[3], dob: r[4], phone: phone_(r[5]), social_contact: r[6],
+      age: r[7], gender: r[8], occupation: r[9], workplace: r[10], income: r[14], province: r[15],
+      room: roomLabel_(r[1]), form_ts: r[0],
+    };
+    const cur = existing[key];
+    if (!cur) {
+      rec.status = lastByRoom[rec.room] === i ? 'Active' : 'Past';
+      rec.email = '-';
+      inserts.push(rec);
+      return;
+    }
+    const patch = {};
+    FORM_FILL_FIELDS.forEach(function (f) {
+      if (isBlank_(cur[f]) && !isBlank_(rec[f])) patch[f] = rec[f];
+    });
+    if (isBlank_(cur.room) && rec.room && isBlank_(cur.move_out_date)) patch.room = rec.room;
+    if (isBlank_(cur.form_ts)) patch.form_ts = rec.form_ts;
+    if (Object.keys(patch).length) updates.push({ id: cur.id, patch: patch });
+  });
+
+  const now = new Date().toISOString();
+  if (inserts.length) {
+    const base = Date.now();
+    const created = inserts.map(function (rec, n) {
+      const row = Object.assign({}, rec);
+      row.id = String(base) + ('00' + n).slice(-3) + Math.floor(Math.random() * 10);
+      row.created_at = now;
+      return toRow_(def, row);
+    });
+    const start = Math.max(tsh.getLastRow(), 2) + 1;
+    tsh.getRange(start, 1, created.length, def.cols.length).setNumberFormat('@').setValues(created);
+  }
+  updates.forEach(function (u) {
+    const rw = findRow_(tsh, u.id);
+    if (rw < 0) return;
+    const cur = tsh.getRange(rw, 1, 1, def.cols.length).getDisplayValues()[0];
+    tsh.getRange(rw, 1, 1, def.cols.length).setValues([toRow_(def, u.patch, cur)]);
+  });
+
+  return { added: inserts.length, updated: updates.length, total: rows.length };
 }

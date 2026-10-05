@@ -9,8 +9,8 @@ import { SHEET_URL } from "@/lib/sheetsApi";
 import styles from "./StatusBar.module.css";
 
 export default function StatusBar() {
-  const { loadError, saveError, setSaveError, saving, isInitialLoading, refresh, rooms, tenants, transactions, isRefreshing } = useData();
-  const issueCount = useMemo(() => healthCheck({ rooms, tenants, transactions }).length, [rooms, tenants, transactions]);
+  const { loadError, saveError, setSaveError, saving, isInitialLoading, refresh, rooms, tenants, transactions, isRefreshing, syncing } = useData();
+  const issueCount = useMemo(() => healthCheck({ rooms, tenants, transactions }).filter((i) => i.level !== "todo").length, [rooms, tenants, transactions]);
 
   let tone = "ok";
   let icon = <CheckCircle2 size={16} />;
@@ -28,10 +28,10 @@ export default function StatusBar() {
     tone = "error";
     icon = <AlertTriangle size={16} />;
     text = `ไม่ได้รับคำยืนยันการบันทึก (${saveError}) โหลดข้อมูลล่าสุดให้แล้ว ตรวจดูอีกครั้ง`;
-  } else if (saving || isInitialLoading || isRefreshing) {
+  } else if (saving || isInitialLoading || isRefreshing || syncing) {
     tone = "busy";
     icon = <Loader2 size={16} className={styles.spin} />;
-    text = saving ? "กำลังบันทึก..." : isInitialLoading ? "กำลังโหลดข้อมูล..." : "กำลังอัปเดตข้อมูลล่าสุด...";
+    text = saving ? "กำลังบันทึก..." : isInitialLoading ? "กำลังโหลดข้อมูล..." : syncing ? "กำลังดึงข้อมูลลูกค้าจากแบบสอบถาม..." : "กำลังอัปเดตข้อมูลล่าสุด...";
   }
 
   return (

@@ -55,7 +55,9 @@ export default function CalendarPage() {
   const stayFor = (room) => {
     const t = findTenant(tenants, room.tenant);
     const start = parseDate(t?.start_date) || monthStart;
-    const end = parseDate(t?.contractEnd) || monthEnd;
+    const contractEnd = parseDate(t?.contractEnd);
+    const movedOut = parseDate(t?.move_out_date);
+    const end = (movedOut && (!contractEnd || movedOut < contractEnd) ? movedOut : contractEnd) || monthEnd;
     const from = start > monthStart ? start : monthStart;
     const to = end < monthEnd ? end : monthEnd;
     if (from > to) return null; // contract not running in this month

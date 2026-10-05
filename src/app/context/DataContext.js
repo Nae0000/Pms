@@ -87,6 +87,7 @@ export const DataProvider = ({ children }) => {
   const [importLoading, setImportLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [loadError, setLoadError] = useState(api.isConfigured ? "" : "NOT_CONFIGURED");
   const [saveError, setSaveError] = useState("");
   const [pending, setPending] = useState(0);
@@ -123,6 +124,30 @@ export const DataProvider = ({ children }) => {
     setIsInitialLoading(false);
   };
 
+
+  // New customers fill in the questionnaire; the script copies them into Tenants. Runs when the app
+  // opens (at most every 30 min) or on demand. Returns { added, updated, total } or null.
+  const SYNC_KEY = 'pms-form-sync-at';
+  const syncFromForm = async (manual = false) => {
+    if (!api.isConfigured) return null;
+    try {
+      if (!manual && Date.now() - Number(localStorage.getItem(SYNC_KEY) || 0) < 30 * 60 * 1000) return null;
+    } catch (e) { /* storage blocked: just sync */ }
+    setSyncing(true);
+    try {
+      const result = await api.syncForm();
+      try { localStorage.setItem(SYNC_KEY, String(Date.now())); } catch (e) { /* ignore */ }
+      if (result.added || result.updated) await fetchData(true);
+      return result;
+    } catch (err) {
+      console.error('Questionnaire sync failed:', err);
+      if (manual) setSaveError(`ดึงข้อมูลจากแบบสอบถามไม่สำเร็จ: ${errMsg(err)}`);
+      return null;
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   useEffect(() => {
     try {
       const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
@@ -133,7 +158,7 @@ export const DataProvider = ({ children }) => {
         setIsInitialLoading(false);
       }
     } catch (e) { /* storage unavailable or corrupt: just load normally */ }
-    fetchData(Boolean(localStorage.getItem(CACHE_KEY)));
+    fetchData(Boolean(localStorage.getItem(CACHE_KEY))).then(() => syncFromForm(false));
   }, []);
 
   // Pick up edits made directly in the Google Sheet when the user comes back to the app.
@@ -357,7 +382,14 @@ export const DataProvider = ({ children }) => {
   };
 
   // Apply the fixes proposed by healthCheck()
-  const applyFixes = async (ops) => { await commit(ops); };
+  const applyFixes = async (ops) => {
+    const inserts = ops.filter(o => o.insert);
+    if (inserts.length) {
+      const rows = await run(() => api.insertRows('rooms', inserts.map(o => o.data)));
+      if (rows) setRooms(prev => [...prev, ...rows]);
+    }
+    await commit(ops.filter(o => !o.insert));
+  };
 
   // Import tenants from Google Sheets (form responses)
   const importFromGoogleSheets = async () => {
@@ -425,7 +457,7 @@ export const DataProvider = ({ children }) => {
       tenants, setTenants, updateTenant, addTenant, addMultipleTenants, deleteTenant,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       importFromGoogleSheets, importLoading, isInitialLoading,
-      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, isRefreshing
+      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, isRefreshing, syncing, syncFromForm
     }}>
       {children}
     </DataContext.Provider>

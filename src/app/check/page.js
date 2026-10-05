@@ -13,6 +13,8 @@ export default function CheckPage() {
   const issues = useMemo(() => healthCheck({ rooms, tenants, transactions }), [rooms, tenants, transactions]);
   const fixable = issues.filter((i) => i.level === "fix");
   const manual = issues.filter((i) => i.level === "warn");
+  const todo = issues.filter((i) => i.level === "todo");
+  const problems = issues.length - todo.length;
 
   if (isInitialLoading) {
     return (
@@ -35,14 +37,14 @@ export default function CheckPage() {
         <div><strong>{rooms.length}</strong><span>ห้อง</span></div>
         <div><strong>{tenants.length}</strong><span>ผู้เช่า</span></div>
         <div><strong>{transactions.length}</strong><span>รายการเงิน</span></div>
-        <div className={issues.length ? styles.bad : styles.good}><strong>{issues.length}</strong><span>จุดที่ต้องดู</span></div>
+        <div className={problems ? styles.bad : styles.good}><strong>{problems}</strong><span>จุดที่ต้องดู</span></div>
       </div>
 
       {loadError && loadError !== "NOT_CONFIGURED" && (
         <div className={`card ${styles.item} ${styles.warn}`}>โหลดข้อมูลไม่สำเร็จ ผลตรวจอาจไม่ครบ: {loadError}</div>
       )}
 
-      {issues.length === 0 && !loadError && (
+      {problems === 0 && !loadError && (
         <div className={`card ${styles.ok}`}>
           <CheckCircle2 size={28} />
           <div>
@@ -50,6 +52,23 @@ export default function CheckPage() {
             <p>ไม่พบชื่อซ้ำ และห้อง/ผู้เช่า/รายการเงินเชื่อมกันถูกต้อง</p>
           </div>
         </div>
+      )}
+
+      {todo.length > 0 && (
+        <section>
+          <div className={styles.sectionHead}>
+            <h2>📝 ต้องกรอกต่อ ({todo.length})</h2>
+            <Link className="btn btn-outline" href="/tenants">ไปหน้าผู้เช่า</Link>
+          </div>
+          <div className={styles.list}>
+            {todo.map((i) => (
+              <div key={i.id} className={`card ${styles.item} ${styles.todo}`}>
+                <div className={styles.title}>{i.title}</div>
+                <div className={styles.detail}>{i.detail}</div>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
 
       {fixable.length > 0 && (

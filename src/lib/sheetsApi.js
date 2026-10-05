@@ -61,7 +61,7 @@ async function post(payload) {
     });
     return parse(res);
   };
-  const repeatable = ["update", "delete", "batch"].includes(payload.action);
+  const repeatable = ["update", "delete", "batch", "syncForm"].includes(payload.action);
   return repeatable ? withRetry(send, 3) : send();
 }
 
@@ -71,3 +71,6 @@ export const updateRow = (table, id, data) => post({ action: "update", table, id
 export const deleteRow = (table, id) => post({ action: "delete", table, id });
 // ops: [{ table, id, data }] — returns true when every row was found and updated
 export const batchUpdate = (ops) => post({ action: "batch", ops }).then((r) => r.results.every(Boolean));
+
+// Pull new customers from the questionnaire sheet into Tenants (idempotent). -> { added, updated, total }
+export const syncForm = () => post({ action: "syncForm" });

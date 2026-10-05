@@ -7,15 +7,28 @@
 export const norm = (v) => String(v ?? "").trim().toLowerCase().replace(/\s+/g, " ");
 export const isBlank = (v) => !String(v ?? "").trim() || String(v).trim() === "-";
 
+const numericLike = (v) => /^[\d\s/-]+$/.test(String(v ?? "").trim());
+// "56/853", "56 / 853", "56853" and "853" all describe the same room
+export function roomKey(v) {
+  let d = String(v ?? "").replace(/\D/g, "");
+  if (d.length >= 5 && d.startsWith("56")) d = d.slice(2);
+  return d;
+}
+
 export function findRoom(rooms, ref) {
   if (isBlank(ref)) return null;
   const s = String(ref).trim();
-  return (
+  const exact =
     (rooms || []).find((r) => r.id === s) ||
     (rooms || []).find((r) => r.name === s) ||
-    (rooms || []).find((r) => norm(r.name) === norm(s)) ||
-    null
-  );
+    (rooms || []).find((r) => norm(r.name) === norm(s));
+  if (exact) return exact;
+  if (numericLike(s) && roomKey(s).length >= 3) {
+    const k = roomKey(s);
+    const hits = (rooms || []).filter((r) => numericLike(r.name) && roomKey(r.name) === k);
+    if (hits.length === 1) return hits[0];
+  }
+  return null;
 }
 
 export function findTenant(tenants, name) {
@@ -117,13 +130,12 @@ export function healthCheck({ rooms = [], tenants = [], transactions = [] }) {
     }
   });
 
+  const missingRooms = new Map(); // label -> tenant that currently lives there
   tenants.forEach((tenant) => {
     if (isBlank(tenant.room)) return;
     const room = findRoom(rooms, tenant.room);
     if (!room) {
-      if (tenant.status === "Active") {
-        add({ kind: "tenant-unknown-room", level: "warn", title: `${tenant.name}: ไม่พบห้อง "${tenant.room}"`, detail: "ชื่อห้องในแท็บ Tenants ต้องตรงกับแท็บ Rooms" });
-      }
+      if (tenant.status === "Active") missingRooms.set(String(tenant.room).trim(), tenant);
       return;
     }
     if (tenant.status === "Active") {
@@ -152,6 +164,31 @@ export function healthCheck({ rooms = [], tenants = [], transactions = [] }) {
       });
     }
   });
+  if (missingRooms.size) {
+    const list = [...missingRooms.entries()];
+    add({
+      kind: "create-rooms",
+      level: "fix",
+      title: `ยังไม่มีห้องในระบบ ${list.length} ห้อง (มีผู้เช่าอยู่ตามแบบสอบถาม)`,
+      detail: `จะสร้างห้องให้และใส่ผู้เช่าให้เลย: ${list.map(([label]) => label).slice(0, 12).join(", ")}${list.length > 12 ? " ..." : ""} (ค่าเช่า/ประเภท กรอกทีหลังได้)`,
+      ops: list.map(([label, tenant]) => ({
+        insert: true,
+        table: "rooms",
+        data: { name: label, type: "", price: "0", status: "occupied", tenant: tenant.name },
+      })),
+    });
+  }
+
+  // contract dates are filled in later, after the contract is signed: list who is still missing them
+  const noDates = tenants.filter((t) => t.status === "Active" && (isBlank(t.start_date) || isBlank(t.contractEnd)));
+  if (noDates.length) {
+    add({
+      kind: "todo-dates",
+      level: "todo",
+      title: `ยังไม่ได้กรอกวันเข้าพัก/วันหมดสัญญา: ${noDates.length} คน`,
+      detail: `${noDates.map((t) => t.name).slice(0, 15).join(", ")}${noDates.length > 15 ? " ..." : ""} (กรอกในหน้า "ผู้เช่า" หรือใน Sheet)`,
+    });
+  }
 
   // --- transactions -> rooms --------------------------------------------------------------
   const badTx = new Map();
