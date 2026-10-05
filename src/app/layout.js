@@ -18,11 +18,11 @@ const inter = Inter({
 const base = process.env.GITHUB_ACTIONS ? "/Pms" : "";
 
 export const metadata = {
-  title: "ระบบจัดการห้องเช่า",
+  title: "ครอบครัวตัวน",
   description: "จัดการห้องพัก ผู้เช่า และการเงิน",
   manifest: `${base}/manifest.webmanifest`,
   icons: { apple: `${base}/icons/apple-touch-icon.png` },
-  appleWebApp: { capable: true, title: "ห้องเช่า", statusBarStyle: "default" },
+  appleWebApp: { capable: true, title: "ครอบครัวตัวน", statusBarStyle: "default" },
 };
 
 export const viewport = {

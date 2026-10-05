@@ -31,7 +31,7 @@ export default function Sidebar() {
         <div className={styles.logoIcon}>
           <Building size={20} />
         </div>
-        <span>Luma Estate</span>
+        <span>ครอบครัวตัวน</span>
       </div>
       
       <nav className={styles.nav}>
