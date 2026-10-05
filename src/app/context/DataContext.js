@@ -84,6 +84,7 @@ export const DataProvider = ({ children }) => {
   const [rooms, setRooms] = useState([]);
   const [tenants, setTenants] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [loanPayments, setLoanPayments] = useState([]);
   const [importLoading, setImportLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -109,10 +110,11 @@ export const DataProvider = ({ children }) => {
       setTransactions(
         (data.transactions || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)))
       );
+      setLoanPayments(data.loan_payments || []);
       setLoadError("");
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
-          rooms: data.rooms || [], tenants: data.tenants || [], transactions: data.transactions || [],
+          rooms: data.rooms || [], tenants: data.tenants || [], transactions: data.transactions || [], loan_payments: data.loan_payments || [],
         }));
       } catch (e) { /* storage full or blocked: caching is optional */ }
     } catch (err) {
@@ -155,6 +157,7 @@ export const DataProvider = ({ children }) => {
         setRooms(cached.rooms);
         setTenants(cached.tenants || []);
         setTransactions(cached.transactions || []);
+        setLoanPayments(cached.loan_payments || []);
         setIsInitialLoading(false);
       }
     } catch (e) { /* storage unavailable or corrupt: just load normally */ }
@@ -212,6 +215,7 @@ export const DataProvider = ({ children }) => {
       if (table === 'rooms') setRooms(upd);
       else if (table === 'tenants') setTenants(upd);
       else if (table === 'transactions') setTransactions(upd);
+      else if (table === 'loan_payments') setLoanPayments(upd);
     });
     return run(async () => {
       const payload = list.map(({ table, id, data }) => ({ table, id, data: stripLocal(table, data) }));
@@ -276,6 +280,8 @@ export const DataProvider = ({ children }) => {
         .forEach(t => ops.push({ table: 'tenants', id: t.id, data: { room: updatedData.name } }));
       transactions.filter(t => t.room === room.name)
         .forEach(t => ops.push({ table: 'transactions', id: t.id, data: { room: updatedData.name } }));
+      loanPayments.filter(p => p.room === room.name)
+        .forEach(p => ops.push({ table: 'loan_payments', id: p.id, data: { room: updatedData.name } }));
     }
     await commit(ops);
   };
@@ -370,6 +376,23 @@ export const DataProvider = ({ children }) => {
     });
     if (ops.length) await commit(ops);
     return { added: rows.length, skipped };
+  };
+
+  // ---- month-by-month instalment table ----
+  const addLoanPayment = async (row) => {
+    const saved = await run(() => api.insertRow('loan_payments', row));
+    if (saved) setLoanPayments(prev => [...prev, saved]);
+  };
+  // Pasted from a spreadsheet: one request. Not retried automatically (a retry could add the rows twice).
+  const addLoanPayments = async (rows) => {
+    const saved = await run(() => api.insertRows('loan_payments', rows));
+    if (saved) setLoanPayments(prev => [...prev, ...saved]);
+    return saved ? saved.length : 0;
+  };
+  const updateLoanPayment = async (id, data) => { await commit([{ table: 'loan_payments', id, data }]); };
+  const deleteLoanPayment = async (id) => {
+    setLoanPayments(prev => prev.filter(p => p.id !== id));
+    await commit([], () => api.deleteRow('loan_payments', id));
   };
 
   // Deleting a room clears the room field of anyone recorded in it (their own data is kept).
@@ -468,7 +491,7 @@ export const DataProvider = ({ children }) => {
       tenants, setTenants, updateTenant, addTenant, addMultipleTenants, deleteTenant,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       importFromGoogleSheets, importLoading, isInitialLoading,
-      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, deleteRoom, isRefreshing, syncing, syncFromForm
+      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, deleteRoom, loanPayments, addLoanPayment, addLoanPayments, updateLoanPayment, deleteLoanPayment, isRefreshing, syncing, syncFromForm
     }}>
       {children}
     </DataContext.Provider>

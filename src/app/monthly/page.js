@@ -20,7 +20,7 @@ const todayStr = () => {
 const isRent = (t) => t.type === "income" && /^(rent|ค่าเช่า)/i.test(t.category || "");
 
 export default function MonthlyPage() {
-  const { rooms, tenants, transactions, addTransaction, deleteTransaction, isInitialLoading } = useData();
+  const { rooms, tenants, transactions, addTransaction, deleteTransaction, isInitialLoading, loanPayments } = useData();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
@@ -67,7 +67,7 @@ export default function MonthlyPage() {
   const collected = items.reduce((s, i) => s + (i.rent > 0 ? Math.min(i.paid, i.rent) : i.paid), 0);
   // The owner pays common-area fees on every managed room, occupied or not.
   const feeTotal = (rooms || []).reduce((sum, r) => sum + monthlyCommonFee(r), 0);
-  const instTotal = (rooms || []).map((r) => installmentInfo(r)).filter((i) => i && !i.done).reduce((sum, i) => sum + i.amount, 0);
+  const instTotal = (rooms || []).map((r) => installmentInfo(r, new Date(), (loanPayments || []).filter((p) => p.room === r.name))).filter((i) => i && !i.done).reduce((sum, i) => sum + i.amount, 0);
   const net = collected - feeTotal - instTotal;
   const counts = {
     all: items.length,

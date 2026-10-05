@@ -12,7 +12,8 @@ import { useData } from "../context/DataContext";
 const baht = (n) => `฿${Math.round(Number(n) || 0).toLocaleString("en-US")}`;
 
 export default function RoomsPage() {
-  const { rooms, updateRoom, addRoom, deleteRoom, tenants } = useData();
+  const { rooms, updateRoom, addRoom, deleteRoom, tenants, loanPayments } = useData();
+  const paymentsOf = (room) => (loanPayments || []).filter((p) => p.room === room.name);
   const activeTenants = (tenants || []).filter(t => t.status === 'Active');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -191,7 +192,7 @@ export default function RoomsPage() {
       </div>
 
       {(() => {
-        const infos = (rooms || []).map((r) => installmentInfo(r)).filter(Boolean);
+        const infos = (rooms || []).map((r) => installmentInfo(r, new Date(), paymentsOf(r))).filter(Boolean);
         if (!infos.length) return null;
         const monthly = infos.filter((i) => !i.done).reduce((a, i) => a + i.amount, 0);
         const paid = infos.reduce((a, i) => a + i.paidAmount, 0);
@@ -243,7 +244,7 @@ export default function RoomsPage() {
                 <Edit size={18} />
               </button>
               {(() => {
-                const inst = installmentInfo(room);
+                const inst = installmentInfo(room, new Date(), paymentsOf(room));
                 if (!inst) return null;
                 return (
                   <div className={styles.loanBox}>
@@ -625,7 +626,7 @@ export default function RoomsPage() {
               </div>
             )}
             {(() => {
-              const inst = installmentInfo(viewingRoom);
+              const inst = installmentInfo(viewingRoom, new Date(), paymentsOf(viewingRoom));
               if (!inst) return null;
               const baht = (n) => `฿${Math.round(n).toLocaleString("en-US")}`;
               return (

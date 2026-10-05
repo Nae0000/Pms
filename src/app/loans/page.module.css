@@ -46,3 +46,26 @@
   .list { grid-template-columns: 1fr; }
   .totals strong { font-size: 1rem; }
 }
+
+/* ---- collapsible month-by-month table ---- */
+.sched { border: 1px solid var(--border-light); border-radius: var(--radius-md); overflow: hidden; }
+.schedToggle { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; min-height: 48px; padding: 0.6rem 0.9rem; background: var(--bg-input); border: none; color: var(--text-main); font: inherit; text-align: left; cursor: pointer; }
+.schedToggle small { display: block; color: var(--text-muted); font-size: 0.75rem; margin-top: 0.1rem; }
+.schedBody { padding: 0.75rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--border-light); border-radius: var(--radius-md); }
+.table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 560px; }
+.table th { background: #fde7a8; color: #1f2937; font-weight: 700; padding: 0.45rem 0.4rem; text-align: center; white-space: nowrap; border-bottom: 1px solid var(--border-light); }
+.table td { padding: 0.2rem 0.25rem; border-bottom: 1px solid var(--border-light); text-align: right; }
+.table tfoot td { font-weight: 700; padding: 0.5rem 0.4rem; background: var(--bg-input); }
+.hasExtra td { background: rgba(253, 231, 168, 0.18); }
+.cellInput { width: 100%; min-width: 4.6rem; padding: 0.35rem 0.4rem; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--text-main); font: inherit; text-align: right; }
+.cellInput:focus { outline: none; border-color: var(--primary); background: var(--bg-input); }
+.cashCell { white-space: nowrap; padding: 0.2rem 0.5rem !important; color: var(--text-muted); }
+.delBtn { width: 36px; height: 36px; border: none; background: transparent; color: var(--danger); border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.delBtn:active { background: rgba(239, 68, 68, 0.12); }
+.legend { font-size: 0.75rem; color: var(--text-muted); }
+.schedActions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.paste { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; border: 1px dashed var(--border-light); border-radius: var(--radius-md); }
+.paste p { font-size: 0.82rem; color: var(--text-muted); }
+.paste textarea { font-family: monospace; font-size: 0.85rem; }
+.pasteFoot { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; font-size: 0.85rem; flex-wrap: wrap; }

@@ -37,9 +37,18 @@ const SCHEMA = {
     labels: ['รหัส', 'วันที่', 'รายละเอียด', 'หมวดหมู่', 'ประเภท', 'ชนิดค่าใช้จ่าย', 'จำนวนเงิน', 'สถานะ', 'ห้อง', 'สร้างเมื่อ'],
     widths: [110, 100, 260, 130, 90, 110, 110, 90, 110, 150],
   },
+  // Month-by-month instalment table of each room (same columns as the owner's own spreadsheet)
+  LoanPayments: {
+    title: 'ตารางผ่อน',
+    cols: ['id', 'room', 'month_no', 'installment', 'principal', 'interest', 'extra', 'note'],
+    labels: ['รหัส', 'ห้อง', 'เดือนที่', 'งวดละ', 'เงินต้น', 'ดอกเบี้ย', 'เงินทบ (เงินต้นที่ตัดจริง)', 'หมายเหตุ'],
+    widths: [110, 110, 80, 110, 120, 110, 170, 220],
+  },
 };
 
 const HEADER_BG = '#4F46E5';
+
+
 
 // ============ Setup (run once) ============
 function setup() {
@@ -184,11 +193,21 @@ function doGet(e) {
     rooms: readTable_('Rooms'),
     tenants: readTable_('Tenants'),
     transactions: readTable_('Transactions'),
+    loan_payments: readTableSafe_('LoanPayments'),
   });
 }
 
+// before setup() has created a new tab the app must still work
+function readTableSafe_(name) {
+  try {
+    return SpreadsheetApp.getActive().getSheetByName(name) ? readTable_(name) : [];
+  } catch (err) {
+    return [];
+  }
+}
+
 function tableName_(t) {
-  const m = { rooms: 'Rooms', tenants: 'Tenants', transactions: 'Transactions' };
+  const m = { rooms: 'Rooms', tenants: 'Tenants', transactions: 'Transactions', loan_payments: 'LoanPayments' };
   if (!m[t]) throw new Error('unknown table: ' + t);
   return m[t];
 }
