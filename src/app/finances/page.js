@@ -273,16 +273,16 @@ export default function FinancesPage() {
         </div>
       </div>
 
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", alignItems: "center", background: "var(--bg-card)", padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-light)" }}>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", marginBottom: "1.5rem", alignItems: "center", background: "var(--bg-card)", padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-light)" }}>
         <span style={{ fontWeight: 600, color: "var(--text-muted)" }}>ตัวกรอง (Filters):</span>
-        <select className="input-field" value={filterRoom} onChange={(e) => setFilterRoom(e.target.value)} style={{ width: "200px", padding: "0.5rem" }}>
+        <select className="input-field" value={filterRoom} onChange={(e) => setFilterRoom(e.target.value)} style={{ width: "200px", maxWidth: "100%", padding: "0.5rem" }}>
           <option value="all">ทุกห้อง (All Rooms)</option>
           <option value="">ไม่ระบุ / ส่วนกลาง</option>
           {(rooms || []).map(r => (
             <option key={r.id} value={r.name}>{r.name}</option>
           ))}
         </select>
-        <select className="input-field" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ width: "200px", padding: "0.5rem" }}>
+        <select className="input-field" value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} style={{ width: "200px", maxWidth: "100%", padding: "0.5rem" }}>
           <option value="all">ทุกหมวดหมู่ (All Categories)</option>
           {allCategories.map((c, i) => (
             <option key={i} value={c}>{c}</option>

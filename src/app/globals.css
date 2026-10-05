@@ -398,3 +398,5 @@ button, a, select, input { -webkit-tap-highlight-color: transparent; }
 @media (max-width: 768px) {
   .en-title { display: none; }
 }
+
+.badge { white-space: nowrap; }
