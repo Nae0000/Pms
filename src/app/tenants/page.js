@@ -238,7 +238,7 @@ export default function TenantsPage() {
     <>
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
-        <h1 className="page-title">การจัดการผู้เช่า (Tenant Management)</h1>
+        <h1 className="page-title">การจัดการผู้เช่า<span className="en-title"> (Tenant Management)</span></h1>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button className={styles.importBtn} onClick={handleImportClick} disabled={importLoading}>
             <Download size={18} />

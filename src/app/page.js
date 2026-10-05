@@ -80,7 +80,7 @@ export default function Dashboard() {
   return (
     <div className="page-container animate-fade-in">
       <h1 className="page-title">
-        ภาพรวมระบบ (Dashboard Overview)
+        ภาพรวมระบบ<span className="en-title"> (Dashboard Overview)</span>
       </h1>
 
       <div className={styles.statsGrid}>

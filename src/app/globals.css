@@ -261,11 +261,16 @@ a {
 }
 
 .modal-content {
+  --modal-pad: 2rem;
   background: var(--bg-card);
-  padding: 2rem;
+  padding: var(--modal-pad);
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 500px;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   margin: 0;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-light);
@@ -273,19 +278,40 @@ a {
 }
 
 .modal-content-lg {
+  --modal-pad: 2rem;
   background: var(--bg-card);
-  padding: 2rem;
+  padding: var(--modal-pad);
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 700px;
   margin: 0;
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
+  max-height: calc(100vh - 2rem);
+  max-height: calc(100dvh - 2rem);
   overflow: hidden;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border-light);
   animation: modalFadeIn 0.2s ease-out forwards;
+}
+
+/* The title row (with the close button) always stays visible while the body scrolls */
+.modal-content > div:first-child {
+  position: sticky;
+  top: calc(var(--modal-pad) * -1);
+  z-index: 5;
+  margin: calc(var(--modal-pad) * -1) calc(var(--modal-pad) * -1) 1rem !important;
+  padding: 1rem var(--modal-pad);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modal-content > div:first-child button:last-of-type {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modal-content-lg::-webkit-scrollbar {
@@ -323,8 +349,9 @@ a {
   }
 
   .modal-content, .modal-content-lg {
-    padding: 1.5rem;
-    max-height: 85vh;
+    --modal-pad: 1.25rem;
+    padding: var(--modal-pad);
+    max-height: 90vh;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0; /* Bottom sheet style */
     margin-bottom: 0;
     width: 100%;
@@ -365,4 +392,9 @@ button, a, select, input { -webkit-tap-highlight-color: transparent; }
 
 @media (display-mode: standalone) {
   body { overscroll-behavior-y: none; }
+}
+
+/* Thai-only page titles on phones: the English half just wraps and wastes space */
+@media (max-width: 768px) {
+  .en-title { display: none; }
 }

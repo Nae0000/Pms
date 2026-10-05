@@ -129,7 +129,7 @@ export default function RoomsPage() {
     <>
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
-        <h1 className="page-title">การจัดการห้องพัก (Room Management)</h1>
+        <h1 className="page-title">การจัดการห้องพัก<span className="en-title"> (Room Management)</span></h1>
         <button className="btn btn-primary" onClick={handleAddClick}>
           <Plus size={20} />
           เพิ่มห้องใหม่ (Add Room)
@@ -184,35 +184,39 @@ export default function RoomsPage() {
       {viewMode === 'grid' ? (
         <div className={styles.roomGrid}>
           {filteredRooms.map((room) => (
-            <div key={room.id} className={`card glass ${styles.roomCard}`}>
-              <div className={styles.roomImageContainer}>
-                <img src={roomImageSrc(room.image) || PLACEHOLDER_IMG} alt={room.name} className={styles.roomImage} />
+            <div
+              key={room.id}
+              className={`card glass ${styles.roomCard}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => handleDetailsClick(room)}
+              onKeyDown={(e) => { if (e.key === "Enter") handleDetailsClick(room); }}
+            >
+              <div className={styles.thumb}>
+                <img src={roomImageSrc(room.image, 300) || PLACEHOLDER_IMG} alt={room.name} className={styles.roomImage} loading="lazy" />
               </div>
-              <div className={styles.roomHeader}>
-                <h2>{room.name || `Room ${room.id}`}</h2>
-                <span className={`badge ${
-                  room.status === 'available' ? 'badge-success' : 
-                  room.status === 'reserved' ? 'badge-info' :
-                  room.status === 'occupied' ? 'badge-danger' : 'badge-warning'
-                }`}>
-                  {room.status === 'reserved' ? 'RESERVED' : room.status.toUpperCase()}
-                </span>
+              <div className={styles.cardBody}>
+                <div className={styles.cardTop}>
+                  <h2>{room.name || `Room ${room.id}`}</h2>
+                  <span className={`badge ${
+                    room.status === 'available' ? 'badge-success' :
+                    room.status === 'reserved' ? 'badge-info' :
+                    room.status === 'occupied' ? 'badge-danger' : 'badge-warning'
+                  }`}>
+                    {({ available: 'ว่าง', occupied: 'มีผู้เช่า', reserved: 'จอง', maintenance: 'ซ่อม' })[room.status] || room.status}
+                  </span>
+                </div>
+                <div className={styles.price}>฿{room.price}<small>/เดือน</small></div>
+                <div className={styles.meta}>
+                  {[room.type, room.floor && `ชั้น ${room.floor}`, room.size && `${room.size} ตร.ม.`].filter(Boolean).join(" · ")}
+                </div>
+                <div className={styles.tenantLine}>
+                  {room.tenant && room.tenant !== "-" ? room.tenant : <span style={{ opacity: 0.7 }}>ยังไม่มีผู้เช่า</span>}
+                </div>
               </div>
-              
-              <div className={styles.roomDetails}>
-                <p><strong>ประเภท (Type):</strong> {room.type}</p>
-                <p><strong>ค่าเช่า (Rent):</strong> ฿{room.price}/เดือน</p>
-                <p><strong>ผู้เช่า (Tenant):</strong> {room.tenant}</p>
-              </div>
-
-              <div className={styles.roomActions}>
-                <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => handleDetailsClick(room)}>
-                  ดูรายละเอียด (Details)
-                </button>
-                <button className={styles.iconBtn} title="Edit Room" onClick={() => handleEditClick(room)}>
-                  <Edit size={18} />
-                </button>
-              </div>
+              <button className={styles.iconBtn} title="แก้ไข (Edit)" aria-label="แก้ไข" onClick={(e) => { e.stopPropagation(); handleEditClick(room); }}>
+                <Edit size={18} />
+              </button>
             </div>
           ))}
         </div>

@@ -258,7 +258,7 @@ export default function FinancesPage() {
     <>
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
-        <h1 className="page-title">ภาพรวมการเงิน (Financial Overview)</h1>
+        <h1 className="page-title">ภาพรวมการเงิน<span className="en-title"> (Financial Overview)</span></h1>
         <div style={{ display: "flex", gap: "1rem" }}>
           <button className="btn btn-outline" onClick={handleExportCSV}>
             <Download size={20} />

@@ -405,3 +405,9 @@
     content: none;
   }
 }
+
+/* Phones: keep each tenant card short — job is available in the detail view */
+@media (max-width: 768px) {
+  .tenantTable td[data-label^="อาชีพ"] { display: none; }
+  .tenantTable td { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+}

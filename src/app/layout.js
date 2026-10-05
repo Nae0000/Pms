@@ -3,6 +3,7 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import BottomNav from "@/components/BottomNav";
 import StatusBar from "@/components/StatusBar";
+import ModalHelper from "@/components/ModalHelper";
 import { DataProvider } from "./context/DataContext";
 
 const outfit = Outfit({
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
               {children}
             </main>
             <BottomNav />
+            <ModalHelper />
           </div>
         </DataProvider>
       </body>
