@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Plus, Search, Filter, Edit, X, Info, LayoutGrid, List } from "lucide-react";
 import styles from "./page.module.css";
 import { roomImageSrc, PLACEHOLDER_IMG } from "@/lib/image";
+import { monthlyCommonFee, DEFAULT_FEE_TIMES } from "@/lib/fees";
 import { useData } from "../context/DataContext";
 
 export default function RoomsPage() {
@@ -578,6 +579,15 @@ export default function RoomsPage() {
                 {viewingRoom.deposit && <div><p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>เงินประกัน</p><p style={{ fontSize: '1rem', fontWeight: '500' }}>฿{viewingRoom.deposit}</p></div>}
                 {viewingRoom.floor && <div><p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ชั้น</p><p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.floor}</p></div>}
                 {viewingRoom.size && <div><p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ขนาด</p><p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.size} ตร.ม.</p></div>}
+              </div>
+            )}
+            {viewingRoom.common_fee && (
+              <div>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ค่าส่วนกลาง</p>
+                <p style={{ fontSize: '1rem', fontWeight: '500' }}>
+                  ฿{viewingRoom.common_fee} × {viewingRoom.common_times || DEFAULT_FEE_TIMES} ครั้ง/ปี
+                  <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> = เฉลี่ย ฿{Math.round(monthlyCommonFee(viewingRoom)).toLocaleString('en-US')}/เดือน</span>
+                </p>
               </div>
             )}
             {viewingRoom.amenities && (

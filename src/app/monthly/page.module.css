@@ -41,3 +41,7 @@
 @media (min-width: 769px) {
   .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
 }
+
+.feeBox { margin-top: 0.9rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-light); display: flex; flex-direction: column; gap: 0.35rem; }
+.feeRow { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); }
+.feeNet { font-size: 1rem; font-weight: 600; color: var(--text-main); }

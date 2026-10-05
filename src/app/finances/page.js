@@ -12,7 +12,7 @@ export default function FinancesPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTx, setEditingTx] = useState(null);
-  const [categories, setCategories] = useState(["Rent", "Deposit", "Utilities", "Maintenance", "Insurance", "Other"]);
+  const [categories, setCategories] = useState(["Rent", "Deposit", "Utilities", "ค่าส่วนกลาง", "Maintenance", "Insurance", "Other"]);
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [isCategoryManageOpen, setIsCategoryManageOpen] = useState(false);

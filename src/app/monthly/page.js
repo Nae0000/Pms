@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight, Phone, MessageCircle, CheckCircle2, Clock, AlertTriangle, Undo2 } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
+import { monthlyCommonFee } from "@/lib/fees";
 
 const DEFAULT_DUE_DAY = 5;
 const MONTHS_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
@@ -55,7 +56,7 @@ export default function MonthlyPage() {
       const paid = payments.reduce((s, t) => s + num(t.amount), 0);
       const isPaid = rent > 0 ? paid >= rent : payments.length > 0;
       const status = isPaid ? "paid" : today > dueDate ? "overdue" : "due";
-      return { room, tenant, rent, dueDate, due, paid, payments, status };
+      return { room, tenant, rent, dueDate, due, paid, payments, status, fee: monthlyCommonFee(room) };
     })
     .sort((a, b) => (ORDER[a.status] - ORDER[b.status]) ||
       a.dueDate.localeCompare(b.dueDate) ||
@@ -63,6 +64,9 @@ export default function MonthlyPage() {
 
   const expected = items.reduce((s, i) => s + i.rent, 0);
   const collected = items.reduce((s, i) => s + (i.rent > 0 ? Math.min(i.paid, i.rent) : i.paid), 0);
+  // The owner pays common-area fees on every managed room, occupied or not.
+  const feeTotal = (rooms || []).reduce((sum, r) => sum + monthlyCommonFee(r), 0);
+  const net = collected - feeTotal;
   const counts = {
     all: items.length,
     overdue: items.filter((i) => i.status === "overdue").length,
@@ -126,6 +130,15 @@ export default function MonthlyPage() {
           <span>ค้าง {baht(Math.max(expected - collected, 0))}</span>
           <span>{counts.paid}/{counts.all} ห้องจ่ายแล้ว</span>
         </div>
+        {feeTotal > 0 && (
+          <div className={styles.feeBox}>
+            <div className={styles.feeRow}><span>ค่าส่วนกลาง (เฉลี่ย/เดือน)</span><span>−{baht(feeTotal)}</span></div>
+            <div className={`${styles.feeRow} ${styles.feeNet}`}>
+              <span>เหลือหลังหักค่าส่วนกลาง</span>
+              <span style={{ color: net >= 0 ? "var(--secondary)" : "var(--danger)" }}>{net < 0 ? "−" : ""}{baht(Math.abs(net))}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className={styles.tabs} role="tablist">
@@ -167,6 +180,7 @@ export default function MonthlyPage() {
                   {it.status === "overdue" && <span className="badge badge-danger"><AlertTriangle size={13} /> เกินกำหนด (วันที่ {it.due})</span>}
                   {it.paid > 0 && it.status !== "paid" && <span className={styles.partial}>จ่ายแล้ว {baht(it.paid)}</span>}
                   {contractEnd && <span className={styles.contract}>สัญญาถึง {contractEnd}</span>}
+                  {it.fee > 0 && <span className={styles.contract}>ค่าส่วนกลางเฉลี่ย {baht(it.fee)}/เดือน</span>}
                 </div>
 
                 <div className={styles.actions}>
