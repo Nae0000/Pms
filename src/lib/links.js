@@ -227,9 +227,11 @@ export function healthCheck({ rooms = [], tenants = [], transactions = [] }) {
 // merge ops that touch the same row so each row is written once
 export function mergeOps(ops) {
   const map = new Map();
+  const inserts = [];
   ops.forEach((o) => {
+    if (o.insert) { inserts.push(o); return; } // new rows have no id to merge on: keep each one as is
     const k = `${o.table}:${o.id}`;
     map.set(k, { ...(map.get(k) || { table: o.table, id: o.id, data: {} }), data: { ...(map.get(k)?.data || {}), ...o.data } });
   });
-  return [...map.values()];
+  return [...inserts, ...map.values()];
 }
