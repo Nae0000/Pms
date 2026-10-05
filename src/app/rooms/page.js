@@ -184,7 +184,7 @@ export default function RoomsPage() {
       </div>
 
       {(() => {
-        const infos = (rooms || []).map(installmentInfo).filter(Boolean);
+        const infos = (rooms || []).map((r) => installmentInfo(r)).filter(Boolean);
         if (!infos.length) return null;
         const monthly = infos.filter((i) => !i.done).reduce((a, i) => a + i.amount, 0);
         const paid = infos.reduce((a, i) => a + i.paidAmount, 0);
