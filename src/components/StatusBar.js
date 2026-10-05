@@ -1,12 +1,16 @@
 "use client";
 
-import { RefreshCw, Table2, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useMemo } from "react";
+import { RefreshCw, Table2, AlertTriangle, CheckCircle2, Loader2, ListChecks } from "lucide-react";
+import { healthCheck } from "@/lib/links";
 import { useData } from "@/app/context/DataContext";
 import { SHEET_URL } from "@/lib/sheetsApi";
 import styles from "./StatusBar.module.css";
 
 export default function StatusBar() {
-  const { loadError, saveError, setSaveError, saving, isInitialLoading, refresh } = useData();
+  const { loadError, saveError, setSaveError, saving, isInitialLoading, refresh, rooms, tenants, transactions, isRefreshing } = useData();
+  const issueCount = useMemo(() => healthCheck({ rooms, tenants, transactions }).length, [rooms, tenants, transactions]);
 
   let tone = "ok";
   let icon = <CheckCircle2 size={16} />;
@@ -23,17 +27,22 @@ export default function StatusBar() {
   } else if (saveError) {
     tone = "error";
     icon = <AlertTriangle size={16} />;
-    text = `บันทึกไม่สำเร็จ: ${saveError}`;
-  } else if (saving || isInitialLoading) {
+    text = `ไม่ได้รับคำยืนยันการบันทึก (${saveError}) โหลดข้อมูลล่าสุดให้แล้ว ตรวจดูอีกครั้ง`;
+  } else if (saving || isInitialLoading || isRefreshing) {
     tone = "busy";
     icon = <Loader2 size={16} className={styles.spin} />;
-    text = saving ? "กำลังบันทึก..." : "กำลังโหลดข้อมูล...";
+    text = saving ? "กำลังบันทึก..." : isInitialLoading ? "กำลังโหลดข้อมูล..." : "กำลังอัปเดตข้อมูลล่าสุด...";
   }
 
   return (
     <div className={`${styles.bar} ${styles[tone]}`} role="status">
       <span className={styles.icon}>{icon}</span>
       <span className={styles.text}>{text}</span>
+      {issueCount > 0 && !loadError && !isInitialLoading && !isRefreshing && (
+        <Link className={styles.issue} href="/check" title="ข้อมูลที่ซ้ำหรือไม่ตรงกัน">
+          <ListChecks size={15} /> {issueCount}
+        </Link>
+      )}
       {saveError && (
         <button className={styles.btn} onClick={() => setSaveError("")}>ปิด</button>
       )}

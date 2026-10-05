@@ -7,7 +7,8 @@ import {
   Home, 
   Users, 
   Wallet,
-  Receipt, 
+  Receipt,
+  ListChecks, 
   CalendarDays,
   Building
 } from "lucide-react";
@@ -20,6 +21,7 @@ const navItems = [
   { name: "ผู้เช่า (Tenants)", href: "/tenants", icon: Users },
   { name: "การเงิน (Finances)", href: "/finances", icon: Wallet },
   { name: "ปฏิทิน (Calendar)", href: "/calendar", icon: CalendarDays },
+  { name: "ตรวจสอบข้อมูล", href: "/check", icon: ListChecks },
 ];
 
 export default function Sidebar() {

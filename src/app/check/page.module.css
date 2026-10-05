@@ -1,0 +1,25 @@
+.intro { color: var(--text-muted); margin-bottom: 1rem; font-size: 0.95rem; }
+.summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; margin-bottom: 1rem; padding: 1rem; }
+.summary div { display: flex; flex-direction: column; gap: 0.1rem; }
+.summary strong { font-size: 1.5rem; }
+.summary span { font-size: 0.78rem; color: var(--text-muted); }
+.good strong { color: var(--secondary); }
+.bad strong { color: var(--warning); }
+
+.ok { display: flex; gap: 0.9rem; align-items: center; color: var(--secondary); margin-bottom: 1rem; }
+.ok p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.15rem; }
+.ok strong { color: var(--text-main); }
+
+.sectionHead { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin: 1.25rem 0 0.75rem; flex-wrap: wrap; }
+.sectionHead h2 { font-size: 1.05rem; display: flex; align-items: center; gap: 0.4rem; }
+
+.list { display: flex; flex-direction: column; gap: 0.6rem; }
+.item { border-left: 4px solid var(--border-light); padding: 0.8rem 1rem; }
+.fix { border-left-color: var(--primary); }
+.warn { border-left-color: var(--warning); }
+.title { font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
+.detail { color: var(--text-muted); font-size: 0.85rem; margin-top: 0.2rem; overflow-wrap: anywhere; }
+.hint { margin-top: 0.75rem; font-size: 0.85rem; color: var(--text-muted); }
+.hint a { color: var(--primary); text-decoration: underline; }
+
+@media (max-width: 480px) { .summary { grid-template-columns: repeat(2, 1fr); } }

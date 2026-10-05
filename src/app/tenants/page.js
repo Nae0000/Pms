@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Plus, Search, Filter, Mail, Phone, FileText, Edit, Trash2, X, Download, User, Briefcase, Heart, Eye, ChevronDown } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
+import { findRoom, norm, isBlank } from "@/lib/links";
 
 const LABEL = { display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' };
 const ROW2 = { display: 'flex', gap: '1rem' };
@@ -49,10 +50,10 @@ export default function TenantsPage() {
     setEditingTenant(tenant);
     setForm({
       name: tenant.name || "", nickname: tenant.nickname || "", dob: tenant.dob || "",
-      age: tenant.age || "", gender: tenant.gender || "", room: tenant.computedRoom || "",
+      age: tenant.age || "", gender: tenant.gender || "", room: tenant.linkedRoomName || "",
       phone: tenant.phone || "", email: tenant.email === "-" ? "" : (tenant.email || ""),
       socialContact: tenant.socialContact || "", occupation: tenant.occupation || "",
-      workplace: tenant.workplace || "", status: tenant.computedStatus || "Active",
+      workplace: tenant.workplace || "", status: tenant.status === "Past" ? "Past" : "Active",
       contractEnd: tenant.contractEnd || "", income: tenant.income || "", province: tenant.province || ""
     });
     setIsEditModalOpen(true);
@@ -92,20 +93,25 @@ export default function TenantsPage() {
     });
   };
 
-  const handleImportSelected = () => {
+  const handleImportSelected = async () => {
     const toImport = [];
     selectedImports.forEach(idx => { if (importData[idx]) toImport.push(importData[idx]); });
-    if (toImport.length > 0) addMultipleTenants(toImport);
     setIsImportModalOpen(false);
+    if (toImport.length > 0) {
+      const res = await addMultipleTenants(toImport);
+      if (res && res.skipped) alert(`นำเข้า ${res.added} รายการ, ข้าม ${res.skipped} รายการที่มีชื่ออยู่แล้ว`);
+    }
   };
 
   const mappedTenants = (tenants || []).map(t => {
-    const linkedRoom = (rooms || []).find(r => r.tenant === t.name);
-    // If not actively linked to a room, fall back to what's stored in the DB (for history)
-    const fallbackRoom = t.room && t.room !== "-" ? t.room : "-";
+    // The room that lists this person is the source of truth; the stored room is only history.
+    const linkedRoom = (rooms || []).find(r => !isBlank(r.tenant) && norm(r.tenant) === norm(t.name));
+    const storedRoom = findRoom(rooms, t.room);
+    const shownRoom = linkedRoom || storedRoom;
     return {
       ...t,
-      computedRoom: linkedRoom ? (linkedRoom.name || linkedRoom.id) : fallbackRoom,
+      linkedRoomName: linkedRoom ? linkedRoom.name : "",
+      computedRoom: shownRoom ? (shownRoom.name || shownRoom.id) : (isBlank(t.room) ? "-" : t.room),
       computedStatus: linkedRoom ? "Active" : "Inactive"
     };
   });
@@ -214,7 +220,9 @@ export default function TenantsPage() {
               <label style={LABEL}>ห้องพัก (Room)</label>
               <select className="input-field" value={form.room} onChange={e => setField('room', e.target.value)} style={W100}>
                 <option value="">- ไม่ระบุห้อง -</option>
-                {rooms && rooms.map(r => <option key={r.id} value={r.id}>{r.id} {r.name ? `- ${r.name}` : ''}</option>)}
+                {(rooms || [])
+                  .filter(r => isBlank(r.tenant) || norm(r.tenant) === norm(editingTenant?.name) || r.name === form.room)
+                  .map(r => <option key={r.id} value={r.name}>{r.name || r.id}{isBlank(r.tenant) ? '' : ' (ห้องปัจจุบัน)'}</option>)}
               </select>
             </div>
             <div style={FLEX1}>

@@ -5,6 +5,7 @@ import styles from "./page.module.css";
 import { roomImageSrc, PLACEHOLDER_IMG } from "@/lib/image";
 import { monthlyCommonFee, DEFAULT_FEE_TIMES } from "@/lib/fees";
 import { installmentInfo } from "@/lib/installment";
+import { norm, isBlank } from "@/lib/links";
 import { useData } from "../context/DataContext";
 
 export default function RoomsPage() {
@@ -424,7 +425,7 @@ export default function RoomsPage() {
                     const fullText = `${t.name || ""} ${t.nickname || ""} ${t.room || "-"}`.toLowerCase();
                     return fullText.includes(tenantSearch.toLowerCase());
                   }).map((t, i) => (
-                    <option key={i} value={t.name}>{t.name}{t.nickname ? ` "${t.nickname}"` : ''} — ห้อง {t.room || '-'}</option>
+                    <option key={i} value={t.name}>{t.name}{t.nickname ? ` "${t.nickname}"` : ''} — {(() => { const r = (rooms || []).find(x => !isBlank(x.tenant) && norm(x.tenant) === norm(t.name)); return r ? `ย้ายจาก ${r.name}` : 'ยังไม่มีห้อง'; })()}</option>
                   ))}
                 </select>
               </div>
@@ -550,7 +551,7 @@ export default function RoomsPage() {
                     const fullText = `${t.name || ""} ${t.nickname || ""} ${t.room || "-"}`.toLowerCase();
                     return fullText.includes(tenantSearch.toLowerCase());
                   }).map((t, i) => (
-                    <option key={i} value={t.name}>{t.name}{t.nickname ? ` "${t.nickname}"` : ''} — ห้อง {t.room || '-'}</option>
+                    <option key={i} value={t.name}>{t.name}{t.nickname ? ` "${t.nickname}"` : ''} — {(() => { const r = (rooms || []).find(x => !isBlank(x.tenant) && norm(x.tenant) === norm(t.name)); return r ? `ย้ายจาก ${r.name}` : 'ยังไม่มีห้อง'; })()}</option>
                   ))}
                 </select>
               </div>

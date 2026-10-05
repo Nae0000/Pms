@@ -1,6 +1,7 @@
 "use client";
 import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import * as api from '../../lib/sheetsApi';
+import { findRoom, findTenant, norm, isBlank, mergeOps } from '../../lib/links';
 
 const DataContext = createContext();
 
@@ -77,6 +78,7 @@ function mapTenantToDB(t) {
 
 // ============ Provider ============
 const errMsg = (e) => (e && e.message) || String(e);
+const CACHE_KEY = 'pms-cache-v1';
 
 export const DataProvider = ({ children }) => {
   const [rooms, setRooms] = useState([]);
@@ -84,6 +86,7 @@ export const DataProvider = ({ children }) => {
   const [transactions, setTransactions] = useState([]);
   const [importLoading, setImportLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [loadError, setLoadError] = useState(api.isConfigured ? "" : "NOT_CONFIGURED");
   const [saveError, setSaveError] = useState("");
   const [pending, setPending] = useState(0);
@@ -97,6 +100,7 @@ export const DataProvider = ({ children }) => {
       return;
     }
     if (!silent) setIsInitialLoading(true);
+    setIsRefreshing(true);
     try {
       const data = await api.fetchAll();
       setRooms((data.rooms || []).map(r => ({ ...r, status: r.status || 'available', tenant: r.tenant || '-' })));
@@ -105,16 +109,31 @@ export const DataProvider = ({ children }) => {
         (data.transactions || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)))
       );
       setLoadError("");
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          rooms: data.rooms || [], tenants: data.tenants || [], transactions: data.transactions || [],
+        }));
+      } catch (e) { /* storage full or blocked: caching is optional */ }
     } catch (err) {
       console.error("Error loading data:", err);
-      if (!silent) setLoadError(errMsg(err));
+      setLoadError(errMsg(err));
     }
     lastFetch.current = Date.now();
+    setIsRefreshing(false);
     setIsInitialLoading(false);
   };
 
   useEffect(() => {
-    fetchData();
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || "null");
+      if (cached && cached.rooms) {
+        setRooms(cached.rooms);
+        setTenants(cached.tenants || []);
+        setTransactions(cached.transactions || []);
+        setIsInitialLoading(false);
+      }
+    } catch (e) { /* storage unavailable or corrupt: just load normally */ }
+    fetchData(Boolean(localStorage.getItem(CACHE_KEY)));
   }, []);
 
   // Pick up edits made directly in the Google Sheet when the user comes back to the app.
@@ -146,42 +165,199 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // ============ Rooms ============
+  // ============ Linked writes ============
+  // Rooms.tenant, Tenants.room and Transactions.room all refer to each other by name, so every
+  // write below also updates the other side. `ops` are applied to local state at once (optimistic)
+  // and then sent to the sheet one by one.
+  // Tenants use camelCase locally; only convert the keys that are actually present so a link-only
+  // patch (e.g. { room }) can never blank out the other columns.
+  const stripLocal = (table, data) => {
+    if (table !== 'tenants') return data;
+    const { socialContact, contractEnd, created_at, timestamp, computedRoom, computedStatus, ...rest } = data;
+    if (socialContact !== undefined) rest.social_contact = socialContact || '';
+    if (contractEnd !== undefined) rest.contract_end = contractEnd || '';
+    return rest;
+  };
+
+  const commit = async (ops, extra) => {
+    const list = mergeOps(ops);
+    if (!list.length && !extra) return null;
+    list.forEach(({ table, id, data }) => {
+      const upd = (prev) => prev.map(r => (r.id === id ? { ...r, ...data } : r));
+      if (table === 'rooms') setRooms(upd);
+      else if (table === 'tenants') setTenants(upd);
+      else if (table === 'transactions') setTransactions(upd);
+    });
+    return run(async () => {
+      const payload = list.map(({ table, id, data }) => ({ table, id, data: stripLocal(table, data) }));
+      if (payload.length) {
+        let done = false;
+        try {
+          done = await api.batchUpdate(payload);
+        } catch (err) {
+          // an older deployment of the script has no batch action: fall back to one request per row
+          if (!/unknown/i.test(String(err && err.message))) throw err;
+          for (const op of payload) await api.updateRow(op.table, op.id, op.data);
+          done = true;
+        }
+        if (!done) throw new Error("ไม่พบแถวที่ต้องแก้ไขใน Sheet");
+      }
+      return extra ? extra() : true;
+    });
+  };
+
+  const fail = (message) => {
+    setSaveError(message);
+    return null;
+  };
+
+  const freeRoomOps = (room) => [{ table: 'rooms', id: room.id, data: { tenant: '-', status: 'available' } }];
+
+  // ---- rooms ----
   const updateRoom = async (id, updatedData) => {
-    setRooms(prev => prev.map(r => r.id === id ? { ...r, ...updatedData } : r));
-    await run(() => api.updateRow('rooms', id, updatedData));
+    const room = rooms.find(r => r.id === id);
+    if (!room) return;
+    const next = { ...room, ...updatedData };
+
+    if (updatedData.name && updatedData.name !== room.name &&
+        rooms.some(r => r.id !== id && norm(r.name) === norm(updatedData.name))) {
+      return fail(`มีห้องชื่อ "${updatedData.name}" อยู่แล้ว`);
+    }
+
+    const ops = [{ table: 'rooms', id, data: updatedData }];
+    const oldT = isBlank(room.tenant) ? '' : room.tenant;
+    const newT = isBlank(next.tenant) ? '' : next.tenant;
+
+    if (oldT !== newT) {
+      const oldTenant = findTenant(tenants, oldT);
+      if (oldTenant && findRoom(rooms, oldTenant.room)?.id === id) {
+        ops.push({ table: 'tenants', id: oldTenant.id, data: { room: '-' } });
+      }
+      const newTenant = findTenant(tenants, newT);
+      if (newTenant) {
+        ops.push({ table: 'tenants', id: newTenant.id, data: { room: next.name, status: 'Active' } });
+        // a person can only live in one room: free the one they were in
+        rooms.filter(r => r.id !== id && !isBlank(r.tenant) && norm(r.tenant) === norm(newT))
+          .forEach(r => ops.push(...freeRoomOps(r)));
+      }
+    } else if (newT && updatedData.name && updatedData.name !== room.name) {
+      const t = findTenant(tenants, newT);
+      if (t) ops.push({ table: 'tenants', id: t.id, data: { room: updatedData.name } });
+    }
+
+    // renaming a room keeps every reference to it intact
+    if (updatedData.name && updatedData.name !== room.name) {
+      tenants.filter(t => !isBlank(t.room) && (t.room === room.name || t.room === room.id))
+        .forEach(t => ops.push({ table: 'tenants', id: t.id, data: { room: updatedData.name } }));
+      transactions.filter(t => t.room === room.name)
+        .forEach(t => ops.push({ table: 'transactions', id: t.id, data: { room: updatedData.name } }));
+    }
+    await commit(ops);
   };
 
   const addRoom = async (newRoomData) => {
+    if (rooms.some(r => norm(r.name) === norm(newRoomData.name))) {
+      return fail(`มีห้องชื่อ "${newRoomData.name}" อยู่แล้ว`);
+    }
     const row = await run(() => api.insertRow('rooms', newRoomData));
-    if (row) setRooms(prev => [...prev, row]);
+    if (!row) return;
+    setRooms(prev => [...prev, row]);
+    const tenant = findTenant(tenants, row.tenant);
+    if (tenant) {
+      const ops = [{ table: 'tenants', id: tenant.id, data: { room: row.name, status: 'Active' } }];
+      rooms.filter(r => !isBlank(r.tenant) && norm(r.tenant) === norm(tenant.name)).forEach(r => ops.push(...freeRoomOps(r)));
+      await commit(ops);
+    }
   };
 
-  // ============ Tenants ============
+  // ---- tenants ----
   const updateTenant = async (id, updatedData) => {
-    setTenants(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
-    await run(() => api.updateRow('tenants', id, mapTenantToDB(updatedData)));
+    const tenant = tenants.find(t => t.id === id);
+    if (!tenant) return;
+    const next = { ...tenant, ...updatedData };
+
+    if (updatedData.name && norm(updatedData.name) !== norm(tenant.name) &&
+        tenants.some(t => t.id !== id && norm(t.name) === norm(updatedData.name))) {
+      return fail(`มีผู้เช่าชื่อ "${updatedData.name}" อยู่แล้ว`);
+    }
+
+    const wantsRoom = next.status !== 'Past' ? findRoom(rooms, next.room) : null;
+    if (wantsRoom && !isBlank(wantsRoom.tenant) && norm(wantsRoom.tenant) !== norm(tenant.name)) {
+      return fail(`ห้อง ${wantsRoom.name} มีผู้เช่า "${wantsRoom.tenant}" อยู่แล้ว`);
+    }
+
+    const data = { ...updatedData };
+    if ('room' in data) data.room = wantsRoom ? wantsRoom.name : (isBlank(data.room) ? '-' : data.room);
+    const ops = [{ table: 'tenants', id, data }];
+
+    // leave any room this person was recorded in, unless it is the one they keep
+    rooms.filter(r => !isBlank(r.tenant) && norm(r.tenant) === norm(tenant.name) && r.id !== wantsRoom?.id)
+      .forEach(r => ops.push(...freeRoomOps(r)));
+    if (wantsRoom) {
+      ops.push({ table: 'rooms', id: wantsRoom.id, data: { tenant: next.name, status: 'occupied' } });
+    }
+    await commit(ops);
   };
 
   const addTenant = async (newTenantData) => {
     const { id: _oldId, ...rest } = newTenantData;
-    const row = await run(() => api.insertRow('tenants', mapTenantToDB(rest)));
-    if (row) setTenants(prev => [...prev, mapTenantFromDB(row)]);
+    if (tenants.some(t => norm(t.name) === norm(rest.name))) {
+      return fail(`มีผู้เช่าชื่อ "${rest.name}" อยู่แล้ว`);
+    }
+    const wantsRoom = rest.status !== 'Past' ? findRoom(rooms, rest.room) : null;
+    if (wantsRoom && !isBlank(wantsRoom.tenant)) {
+      return fail(`ห้อง ${wantsRoom.name} มีผู้เช่า "${wantsRoom.tenant}" อยู่แล้ว`);
+    }
+    const toSave = { ...rest, room: wantsRoom ? wantsRoom.name : (isBlank(rest.room) ? '-' : rest.room) };
+    const row = await run(() => api.insertRow('tenants', mapTenantToDB(toSave)));
+    if (!row) return;
+    setTenants(prev => [...prev, mapTenantFromDB(row)]);
+    if (wantsRoom) await commit([{ table: 'rooms', id: wantsRoom.id, data: { tenant: row.name, status: 'occupied' } }]);
   };
 
+  // Returns { added, skipped } so the UI can say how many were already in the sheet.
   const addMultipleTenants = async (tenantsArray) => {
-    const dbDataArray = tenantsArray.map(t => {
+    const seen = new Set(tenants.map(t => `${norm(t.name)}|${String(t.phone || '').replace(/\D/g, '')}`));
+    const names = new Set(tenants.map(t => norm(t.name)));
+    const fresh = [];
+    let skipped = 0;
+    tenantsArray.forEach(t => {
+      const key = `${norm(t.name)}|${String(t.phone || '').replace(/\D/g, '')}`;
+      if (seen.has(key) || names.has(norm(t.name))) { skipped += 1; return; }
+      seen.add(key); names.add(norm(t.name));
+      const room = findRoom(rooms, t.room);
       const { id: _oldId, ...rest } = t;
-      return mapTenantToDB(rest);
+      fresh.push({ ...rest, room: room ? room.name : (isBlank(t.room) ? '-' : t.room) });
     });
-    const rows = await run(() => api.insertRows('tenants', dbDataArray));
-    if (rows) setTenants(prev => [...prev, ...rows.map(mapTenantFromDB)]);
+    if (!fresh.length) return { added: 0, skipped };
+    const rows = await run(() => api.insertRows('tenants', fresh.map(mapTenantToDB)));
+    if (!rows) return { added: 0, skipped };
+    setTenants(prev => [...prev, ...rows.map(mapTenantFromDB)]);
+
+    const ops = [];
+    const taken = new Set(rooms.filter(r => !isBlank(r.tenant)).map(r => r.id));
+    rows.forEach(r => {
+      const room = findRoom(rooms, r.room);
+      if (room && !taken.has(room.id) && r.status !== 'Past') {
+        taken.add(room.id);
+        ops.push({ table: 'rooms', id: room.id, data: { tenant: r.name, status: 'occupied' } });
+      }
+    });
+    if (ops.length) await commit(ops);
+    return { added: rows.length, skipped };
   };
 
   const deleteTenant = async (id) => {
+    const tenant = tenants.find(t => t.id === id);
     setTenants(prev => prev.filter(t => t.id !== id));
-    await run(() => api.deleteRow('tenants', id));
+    const ops = tenant
+      ? rooms.filter(r => !isBlank(r.tenant) && norm(r.tenant) === norm(tenant.name)).flatMap(freeRoomOps)
+      : [];
+    await commit(ops, () => api.deleteRow('tenants', id));
   };
+
+  // Apply the fixes proposed by healthCheck()
+  const applyFixes = async (ops) => { await commit(ops); };
 
   // Import tenants from Google Sheets (form responses)
   const importFromGoogleSheets = async () => {
@@ -249,7 +425,7 @@ export const DataProvider = ({ children }) => {
       tenants, setTenants, updateTenant, addTenant, addMultipleTenants, deleteTenant,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       importFromGoogleSheets, importLoading, isInitialLoading,
-      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData()
+      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, isRefreshing
     }}>
       {children}
     </DataContext.Provider>

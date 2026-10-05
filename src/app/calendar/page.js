@@ -2,9 +2,17 @@
 
 import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Maximize2, ChevronLeft, ChevronRight, X, User, Phone, Briefcase, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, User, Phone, Briefcase, ExternalLink } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
+import { findTenant, isBlank } from "@/lib/links";
+
+const MONTHS_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+const CELL = 50; // px per day, matches .gridCell
+const parseDate = (v) => {
+  const m = String(v || "").match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+};
 
 export default function CalendarPage() {
   const rightPanelRef = useRef(null);
@@ -13,8 +21,17 @@ export default function CalendarPage() {
   const { rooms, tenants } = useData();
   const [selectedTenant, setSelectedTenant] = useState(null);
 
+  const [cursor, setCursor] = useState(() => {
+    const d = new Date();
+    return { y: d.getFullYear(), m: d.getMonth() };
+  });
+  const shift = (delta) => setCursor(({ y, m }) => {
+    const d = new Date(y, m + delta, 1);
+    return { y: d.getFullYear(), m: d.getMonth() };
+  });
+
   const handleTenantClick = (tenantName) => {
-    const t = tenants?.find(t => t.name === tenantName);
+    const t = findTenant(tenants, tenantName);
     if (t) setSelectedTenant(t);
   };
 
@@ -25,23 +42,42 @@ export default function CalendarPage() {
     }
   };
 
-  const dates = Array.from({ length: 31 }, (_, i) => i + 1); // Mock 1-31 days
+  const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate();
+  const dates = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const monthStart = new Date(cursor.y, cursor.m, 1);
+  const monthEnd = new Date(cursor.y, cursor.m, daysInMonth);
+  const today = new Date();
+  const todayDay = today.getFullYear() === cursor.y && today.getMonth() === cursor.m ? today.getDate() : null;
+  const dow = (d) => new Date(cursor.y, cursor.m, d).getDay();
+  const isWeekend = (d) => dow(d) === 0 || dow(d) === 6;
+
+  // A tenant's stay, clipped to the month shown. No dates in the sheet = the whole month.
+  const stayFor = (room) => {
+    const t = findTenant(tenants, room.tenant);
+    const start = parseDate(t?.start_date) || monthStart;
+    const end = parseDate(t?.contractEnd) || monthEnd;
+    const from = start > monthStart ? start : monthStart;
+    const to = end < monthEnd ? end : monthEnd;
+    if (from > to) return null; // contract not running in this month
+    return { startDay: from.getDate(), endDay: to.getDate(), tenant: t };
+  };
 
   return (
     <div className="page-container animate-fade-in">
       <div className={styles.calendarContainer}>
         {/* Toolbar */}
         <div className={styles.calendarToolbar}>
-          <h2>ตารางการจอง (Booking Calendar)</h2>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <button className="btn btn-outline" style={{ padding: '0.25rem 0.5rem' }}>
+          <h2>ตารางห้อง</h2>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button className="btn btn-outline" aria-label="เดือนก่อน" style={{ padding: '0.25rem 0.5rem' }} onClick={() => shift(-1)}>
               <ChevronLeft size={16} />
             </button>
-            <button className="btn btn-outline" style={{ padding: '0.25rem 0.5rem' }}>
+            <strong style={{ minWidth: '9rem', textAlign: 'center' }}>{MONTHS_TH[cursor.m]} {cursor.y + 543}</strong>
+            <button className="btn btn-outline" aria-label="เดือนถัดไป" style={{ padding: '0.25rem 0.5rem' }} onClick={() => shift(1)}>
               <ChevronRight size={16} />
             </button>
-            <button className="btn btn-outline" title="Fullscreen" style={{ marginLeft: '1rem', padding: '0.25rem 0.5rem' }}>
-              <Maximize2 size={16} />
+            <button className="btn btn-outline" style={{ padding: '0.25rem 0.75rem' }} onClick={() => setCursor({ y: today.getFullYear(), m: today.getMonth() })}>
+              วันนี้
             </button>
           </div>
         </div>
@@ -65,11 +101,11 @@ export default function CalendarPage() {
           <div className={styles.rightPanel} ref={rightPanelRef} onScroll={handleScroll}>
             <div className={styles.rightHeader}>
               <div className={styles.monthRow}>
-                <div className={styles.monthCell} style={{ width: `${50 * 31}px` }}>เมษายน 2026 (April 2026)</div>
+                <div className={styles.monthCell} style={{ width: `${CELL * daysInMonth}px` }}>{MONTHS_TH[cursor.m]} {cursor.y + 543}</div>
               </div>
               <div className={styles.dateRow}>
                 {dates.map((d) => (
-                  <div key={d} className={`${styles.dateCell} ${d % 7 === 0 || d % 7 === 6 ? styles.weekend : ''}`}>
+                  <div key={d} className={`${styles.dateCell} ${isWeekend(d) ? styles.weekend : ''}`} style={d === todayDay ? { color: 'var(--primary)', fontWeight: 700 } : undefined}>
                     {d}
                   </div>
                 ))}
@@ -77,32 +113,46 @@ export default function CalendarPage() {
             </div>
 
             <div className={styles.gridBody}>
-              {rooms.map((room) => (
-                <div key={room.id} className={styles.gridRow}>
-                  {dates.map((d, colIndex) => (
-                    <div key={colIndex} className={`${styles.gridCell} ${d % 7 === 0 || d % 7 === 6 ? styles.weekend : ''}`}>
-                      {/* Show Vacant text on empty cells if the room is available globally */}
-                      {room.status === 'available' && <span className={styles.vacantText}>ว่าง (Vacant)</span>}
-                    </div>
-                  ))}
-                  
-                  {/* Dynamic Bookings based on room status */}
-                  {room.status === 'occupied' && (
-                    <div 
-                      className={`${styles.bookingBar} ${styles['status-occupied']}`} 
-                      style={{ left: '100px', width: '400px', cursor: 'pointer' }}
-                      onClick={() => handleTenantClick(room.tenant)}
-                    >
-                      ผู้เช่า (Guest): {room.tenant}
-                    </div>
-                  )}
-                  {room.status === 'maintenance' && (
-                    <div className={`${styles.bookingBar} ${styles['status-maintenance']}`} style={{ left: '50px', width: '250px' }}>
-                      ซ่อมบำรุง (Maintenance)
-                    </div>
-                  )}
-                </div>
-              ))}
+              {rooms.length === 0 && <div style={{ padding: '1.5rem', color: 'var(--text-muted)' }}>ยังไม่มีห้อง</div>}
+              {rooms.map((room) => {
+                const stay = room.status === 'occupied' ? stayFor(room) : null;
+                return (
+                  <div key={room.id} className={styles.gridRow}>
+                    {dates.map((d) => (
+                      <div
+                        key={d}
+                        className={`${styles.gridCell} ${isWeekend(d) ? styles.weekend : ''}`}
+                        style={d === todayDay ? { background: 'rgba(79, 70, 229, 0.12)' } : undefined}
+                      >
+                        {room.status === 'available' && d === 1 && <span className={styles.vacantText}>ว่าง</span>}
+                      </div>
+                    ))}
+
+                    {stay && (
+                      <div
+                        className={`${styles.bookingBar} ${styles['status-occupied']}`}
+                        style={{ left: `${(stay.startDay - 1) * CELL}px`, width: `${(stay.endDay - stay.startDay + 1) * CELL}px` }}
+                        onClick={() => handleTenantClick(room.tenant)}
+                      >
+                        {isBlank(room.tenant) ? 'ไม่ระบุผู้เช่า' : room.tenant}
+                      </div>
+                    )}
+                    {room.status === 'occupied' && !stay && (
+                      <div className={styles.vacantText} style={{ position: 'absolute', left: 8, top: 10 }}>สัญญาไม่อยู่ในเดือนนี้</div>
+                    )}
+                    {room.status === 'reserved' && (
+                      <div className={styles.bookingBar} style={{ left: 0, width: `${CELL * daysInMonth}px`, background: 'var(--warning)' }}>
+                        จอง
+                      </div>
+                    )}
+                    {room.status === 'maintenance' && (
+                      <div className={`${styles.bookingBar} ${styles['status-maintenance']}`} style={{ left: 0, width: `${CELL * daysInMonth}px` }}>
+                        ซ่อมบำรุง
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

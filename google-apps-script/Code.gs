@@ -216,6 +216,23 @@ function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
     if (body.key !== API_KEY) return out_({ ok: false, error: 'unauthorized' });
+    if (body.action === 'batch') {
+      // many row updates in a single request (one lock, one round trip)
+      const results = body.ops.map(function (op) {
+        const nm = tableName_(op.table);
+        const df = SCHEMA[nm];
+        const shh = SpreadsheetApp.getActive().getSheetByName(nm);
+        const rw = findRow_(shh, op.id);
+        if (rw < 0) return false;
+        const cur = shh.getRange(rw, 1, 1, df.cols.length).getDisplayValues()[0];
+        const patch = Object.assign({}, op.data);
+        delete patch.id;
+        shh.getRange(rw, 1, 1, df.cols.length).setValues([toRow_(df, patch, cur)]);
+        return true;
+      });
+      return out_({ ok: true, results: results });
+    }
+
     const name = tableName_(body.table);
     const def = SCHEMA[name];
     const sh = SpreadsheetApp.getActive().getSheetByName(name);

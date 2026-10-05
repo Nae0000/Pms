@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Plus, Download, X, Edit, Trash2 } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
+import { isCounted } from "@/lib/finance";
 
 export default function FinancesPage() {
   const { transactions, rooms, addTransaction, updateTransaction, deleteTransaction, isInitialLoading } = useData();
@@ -60,6 +61,7 @@ export default function FinancesPage() {
     const d = new Date(t.date);
     const isThisMonth = d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     if (!isThisMonth) return false;
+    if (!isCounted(t)) return false; // pending / overdue / cancelled are not real money yet
     
     // Top dropdown filters
     if (filterRoom !== "all" && t.room !== filterRoom) return false;
@@ -364,7 +366,7 @@ export default function FinancesPage() {
                       {t.type === "income" ? "+" : "-"}฿{parseFloat(String(t.amount).replace(/,/g, "") || 0).toLocaleString()}
                     </td>
                     <td data-label="สถานะ (Status)">
-                      <span className={`badge ${t.status === "Paid" ? "badge-success" : t.status === "Overdue" ? "badge-danger" : "badge-warning"}`}>{t.status}</span>
+                      <span className={`badge ${t.status === "Paid" ? "badge-success" : t.status === "Overdue" ? "badge-danger" : t.status === "Cancelled" ? "badge-neutral" : "badge-warning"}`}>{t.status === "Cancelled" ? "ยกเลิก" : t.status}</span>
                     </td>
                     <td data-label="จัดการ (Actions)">
                       <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>

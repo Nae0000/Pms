@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "./context/DataContext";
+import { isCounted } from "@/lib/finance";
 import Link from "next/link";
 
 export default function Dashboard() {
@@ -44,11 +45,11 @@ export default function Dashboard() {
 
   // 1. Monthly Revenue
   const thisMonthIncome = (transactions || [])
-    .filter(t => t.type === 'income' && isThisMonth(t.date) && t.status === 'Paid')
+    .filter(t => t.type === 'income' && isThisMonth(t.date) && isCounted(t))
     .reduce((sum, t) => sum + parseFloat(String(t.amount).replace(/,/g, "") || 0), 0);
 
   const lastMonthIncome = (transactions || [])
-    .filter(t => t.type === 'income' && isLastMonth(t.date) && t.status === 'Paid')
+    .filter(t => t.type === 'income' && isLastMonth(t.date) && isCounted(t))
     .reduce((sum, t) => sum + parseFloat(String(t.amount).replace(/,/g, "") || 0), 0);
 
   let revenueTrend = 0;
