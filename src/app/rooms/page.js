@@ -4,6 +4,7 @@ import { Plus, Search, Filter, Edit, X, Info, LayoutGrid, List } from "lucide-re
 import styles from "./page.module.css";
 import { roomImageSrc, PLACEHOLDER_IMG } from "@/lib/image";
 import { monthlyCommonFee, DEFAULT_FEE_TIMES } from "@/lib/fees";
+import { installmentInfo } from "@/lib/installment";
 import { useData } from "../context/DataContext";
 
 export default function RoomsPage() {
@@ -182,6 +183,22 @@ export default function RoomsPage() {
         </div>
       </div>
 
+      {(() => {
+        const infos = (rooms || []).map(installmentInfo).filter(Boolean);
+        if (!infos.length) return null;
+        const monthly = infos.filter((i) => !i.done).reduce((a, i) => a + i.amount, 0);
+        const paid = infos.reduce((a, i) => a + i.paidAmount, 0);
+        const left = infos.reduce((a, i) => a + (i.remainingAmount || 0), 0);
+        const fmt = (n) => `฿${Math.round(n).toLocaleString("en-US")}`;
+        return (
+          <div className={`card glass ${styles.instSummary}`}>
+            <div><span>ผ่อนรวม/เดือน</span><strong>{fmt(monthly)}</strong></div>
+            <div><span>ผ่อนไปแล้วรวม</span><strong>{fmt(paid)}</strong></div>
+            <div><span>คงเหลือรวม</span><strong>{fmt(left)}</strong></div>
+          </div>
+        );
+      })()}
+
       {viewMode === 'grid' ? (
         <div className={styles.roomGrid}>
           {filteredRooms.map((room) => (
@@ -214,6 +231,16 @@ export default function RoomsPage() {
                 <div className={styles.tenantLine}>
                   {room.tenant && room.tenant !== "-" ? room.tenant : <span style={{ opacity: 0.7 }}>ยังไม่มีผู้เช่า</span>}
                 </div>
+                {(() => {
+                  const inst = installmentInfo(room);
+                  if (!inst) return null;
+                  return (
+                    <div className={styles.instLine}>
+                      <div className={styles.instBar}><div className={styles.instFill} style={{ width: `${inst.percent ?? 0}%` }} /></div>
+                      <span>{inst.done ? "ผ่อนครบแล้ว" : `ผ่อนแล้ว ${inst.paidCount}${inst.total ? `/${inst.total}` : ""} งวด`}</span>
+                    </div>
+                  );
+                })()}
               </div>
               <button className={styles.iconBtn} title="แก้ไข (Edit)" aria-label="แก้ไข" onClick={(e) => { e.stopPropagation(); handleEditClick(room); }}>
                 <Edit size={18} />
@@ -581,6 +608,28 @@ export default function RoomsPage() {
                 {viewingRoom.size && <div><p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ขนาด</p><p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.size} ตร.ม.</p></div>}
               </div>
             )}
+            {(() => {
+              const inst = installmentInfo(viewingRoom);
+              if (!inst) return null;
+              const baht = (n) => `฿${Math.round(n).toLocaleString("en-US")}`;
+              return (
+                <div className={styles.instBox}>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>การผ่อนห้อง</p>
+                  {inst.total > 0 && (
+                    <div className={styles.instBar} style={{ height: 10, marginBottom: '0.5rem' }}>
+                      <div className={styles.instFill} style={{ width: `${inst.percent}%` }} />
+                    </div>
+                  )}
+                  <div className={styles.instGrid}>
+                    <div><span>ค่างวด</span><strong>{baht(inst.amount)}/เดือน</strong></div>
+                    <div><span>ผ่อนแล้ว</span><strong>{inst.paidCount}{inst.total ? ` / ${inst.total}` : ""} งวด{inst.percent !== null ? ` (${inst.percent}%)` : ""}</strong></div>
+                    <div><span>จ่ายไปแล้ว</span><strong>{baht(inst.paidAmount)}</strong></div>
+                    {inst.remainingAmount !== null && <div><span>คงเหลือ</span><strong>{baht(inst.remainingAmount)} ({inst.remainingCount} งวด)</strong></div>}
+                    {inst.endLabel && <div><span>ผ่อนหมด</span><strong>{inst.done ? "ครบแล้ว" : inst.endLabel}</strong></div>}
+                  </div>
+                </div>
+              );
+            })()}
             {viewingRoom.common_fee && (
               <div>
                 <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ค่าส่วนกลาง</p>

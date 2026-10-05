@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Phone, MessageCircle, CheckCircle2, Clock, A
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
 import { monthlyCommonFee } from "@/lib/fees";
+import { installmentInfo } from "@/lib/installment";
 
 const DEFAULT_DUE_DAY = 5;
 const MONTHS_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
@@ -66,7 +67,8 @@ export default function MonthlyPage() {
   const collected = items.reduce((s, i) => s + (i.rent > 0 ? Math.min(i.paid, i.rent) : i.paid), 0);
   // The owner pays common-area fees on every managed room, occupied or not.
   const feeTotal = (rooms || []).reduce((sum, r) => sum + monthlyCommonFee(r), 0);
-  const net = collected - feeTotal;
+  const instTotal = (rooms || []).map((r) => installmentInfo(r)).filter((i) => i && !i.done).reduce((sum, i) => sum + i.amount, 0);
+  const net = collected - feeTotal - instTotal;
   const counts = {
     all: items.length,
     overdue: items.filter((i) => i.status === "overdue").length,
@@ -130,11 +132,12 @@ export default function MonthlyPage() {
           <span>ค้าง {baht(Math.max(expected - collected, 0))}</span>
           <span>{counts.paid}/{counts.all} ห้องจ่ายแล้ว</span>
         </div>
-        {feeTotal > 0 && (
+        {(feeTotal > 0 || instTotal > 0) && (
           <div className={styles.feeBox}>
-            <div className={styles.feeRow}><span>ค่าส่วนกลาง (เฉลี่ย/เดือน)</span><span>−{baht(feeTotal)}</span></div>
+            {feeTotal > 0 && <div className={styles.feeRow}><span>ค่าส่วนกลาง (เฉลี่ย/เดือน)</span><span>−{baht(feeTotal)}</span></div>}
+            {instTotal > 0 && <div className={styles.feeRow}><span>ค่างวดผ่อนห้อง/เดือน</span><span>−{baht(instTotal)}</span></div>}
             <div className={`${styles.feeRow} ${styles.feeNet}`}>
-              <span>เหลือหลังหักค่าส่วนกลาง</span>
+              <span>เหลือหลังหักค่าใช้จ่าย</span>
               <span style={{ color: net >= 0 ? "var(--secondary)" : "var(--danger)" }}>{net < 0 ? "−" : ""}{baht(Math.abs(net))}</span>
             </div>
           </div>
