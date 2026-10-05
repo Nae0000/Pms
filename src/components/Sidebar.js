@@ -8,7 +8,8 @@ import {
   Users, 
   Wallet,
   Receipt,
-  ListChecks, 
+  ListChecks,
+  Landmark,
   CalendarDays,
   Building
 } from "lucide-react";
@@ -18,6 +19,7 @@ const navItems = [
   { name: "หน้าหลัก (Dashboard)", href: "/", icon: LayoutDashboard },
   { name: "ค่าเช่ารายเดือน", href: "/monthly", icon: Receipt },
   { name: "ห้องพัก (Rooms)", href: "/rooms", icon: Home },
+  { name: "ผ่อนห้อง", href: "/loans", icon: Landmark },
   { name: "ผู้เช่า (Tenants)", href: "/tenants", icon: Users },
   { name: "การเงิน (Finances)", href: "/finances", icon: Wallet },
   { name: "ปฏิทิน (Calendar)", href: "/calendar", icon: CalendarDays },

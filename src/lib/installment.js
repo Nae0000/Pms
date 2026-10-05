@@ -4,7 +4,8 @@ const MONTHS_TH = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.�
 
 export function installmentInfo(room, now = new Date()) {
   const amount = num(room?.installment);
-  if (!amount) return null;
+  const loan = num(room?.loan_amount);
+  if (!amount && !loan) return null;
 
   const total = parseInt(room.installment_months, 10) || 0; // 0 = unknown / open-ended
   const m = String(room.installment_start || "").match(/^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?/);
@@ -23,6 +24,14 @@ export function installmentInfo(room, now = new Date()) {
 
   const remainingCount = total ? total - paidCount : null;
   const done = total > 0 && paidCount >= total;
+  const paidAmount = amount * paidCount;
+  // progress: by instalments when the term is known, otherwise by money against the loan
+  const percent = total
+    ? Math.round((paidCount / total) * 100)
+    : loan && amount ? Math.min(100, Math.round((paidAmount / loan) * 100)) : null;
+  const started = paidCount > 0 || Number.isFinite(manual) || Boolean(m);
+  const status = done ? "done" : amount && started ? "paying" : "todo";
+  const statusLabel = { done: "ผ่อนครบแล้ว", paying: "กำลังผ่อน", todo: "ยังไม่ได้กรอกข้อมูลผ่อน" }[status];
 
   let endLabel = "";
   if (m && total) {
@@ -32,13 +41,16 @@ export function installmentInfo(room, now = new Date()) {
 
   return {
     amount,
+    loan,
     total,
     paidCount,
-    paidAmount: amount * paidCount,
+    paidAmount,
     remainingCount,
-    remainingAmount: remainingCount === null ? null : amount * remainingCount,
-    percent: total ? Math.round((paidCount / total) * 100) : null,
+    remainingAmount: remainingCount === null ? (loan ? Math.max(loan - paidAmount, 0) : null) : amount * remainingCount,
+    percent,
     done,
     endLabel,
+    status,
+    statusLabel,
   };
 }

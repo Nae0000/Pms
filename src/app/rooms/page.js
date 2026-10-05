@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { Plus, Search, Filter, Edit, X, Info, LayoutGrid, List } from "lucide-react";
 import styles from "./page.module.css";
 import { roomImageSrc, PLACEHOLDER_IMG } from "@/lib/image";
@@ -7,6 +8,8 @@ import { monthlyCommonFee, DEFAULT_FEE_TIMES } from "@/lib/fees";
 import { installmentInfo } from "@/lib/installment";
 import { norm, isBlank } from "@/lib/links";
 import { useData } from "../context/DataContext";
+
+const baht = (n) => `฿${Math.round(Number(n) || 0).toLocaleString("en-US")}`;
 
 export default function RoomsPage() {
   const { rooms, updateRoom, addRoom, deleteRoom, tenants } = useData();
@@ -133,10 +136,13 @@ export default function RoomsPage() {
     <div className="page-container animate-fade-in">
       <div className={styles.header}>
         <h1 className="page-title">การจัดการห้องพัก<span className="en-title"> (Room Management)</span></h1>
-        <button className="btn btn-primary" onClick={handleAddClick}>
-          <Plus size={20} />
-          เพิ่มห้องใหม่ (Add Room)
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Link href="/loans" className="btn btn-outline">ตารางผ่อนห้อง</Link>
+          <button className="btn btn-primary" onClick={handleAddClick}>
+            <Plus size={20} />
+            เพิ่มห้องใหม่ (Add Room)
+          </button>
+        </div>
       </div>
 
       <div className={`card glass ${styles.controls}`}>
@@ -232,20 +238,29 @@ export default function RoomsPage() {
                 <div className={styles.tenantLine}>
                   {room.tenant && room.tenant !== "-" ? room.tenant : <span style={{ opacity: 0.7 }}>ยังไม่มีผู้เช่า</span>}
                 </div>
-                {(() => {
-                  const inst = installmentInfo(room);
-                  if (!inst) return null;
-                  return (
-                    <div className={styles.instLine}>
-                      <div className={styles.instBar}><div className={styles.instFill} style={{ width: `${inst.percent ?? 0}%` }} /></div>
-                      <span>{inst.done ? "ผ่อนครบแล้ว" : `ผ่อนแล้ว ${inst.paidCount}${inst.total ? `/${inst.total}` : ""} งวด`}</span>
-                    </div>
-                  );
-                })()}
               </div>
               <button className={styles.iconBtn} title="แก้ไข (Edit)" aria-label="แก้ไข" onClick={(e) => { e.stopPropagation(); handleEditClick(room); }}>
                 <Edit size={18} />
               </button>
+              {(() => {
+                const inst = installmentInfo(room);
+                if (!inst) return null;
+                return (
+                  <div className={styles.loanBox}>
+                    <div className={styles.loanNums}>
+                      <span>ยอดกู้ <b>{inst.loan ? baht(inst.loan) : "-"}</b></span>
+                      <span>ผ่อนไปแล้ว <b>{baht(inst.paidAmount)}</b></span>
+                    </div>
+                    <div className={styles.loanBar} aria-label={`ผ่อนแล้ว ${inst.percent ?? 0}%`}>
+                      <div className={styles.loanFill} style={{ width: `${inst.percent ?? 0}%` }} />
+                    </div>
+                    <div className={styles.loanFoot}>
+                      <span className={`${styles.loanStatus} ${styles["ls_" + inst.status]}`}>{inst.statusLabel}</span>
+                      <span>{inst.paidCount}{inst.total ? ` / ${inst.total}` : ""} งวด{inst.percent !== null ? ` · ${inst.percent}%` : ""}</span>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           ))}
         </div>
@@ -622,6 +637,7 @@ export default function RoomsPage() {
                     </div>
                   )}
                   <div className={styles.instGrid}>
+                    {inst.loan > 0 && <div><span>ยอดกู้</span><strong>{baht(inst.loan)}</strong></div>}
                     <div><span>ค่างวด</span><strong>{baht(inst.amount)}/เดือน</strong></div>
                     <div><span>ผ่อนแล้ว</span><strong>{inst.paidCount}{inst.total ? ` / ${inst.total}` : ""} งวด{inst.percent !== null ? ` (${inst.percent}%)` : ""}</strong></div>
                     <div><span>จ่ายไปแล้ว</span><strong>{baht(inst.paidAmount)}</strong></div>
