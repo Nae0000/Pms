@@ -23,7 +23,11 @@ export function scheduleTotals(payments) {
   };
 }
 
+// Rooms bought outright (ซื้อสด) have no loan: no instalments, no monthly cost.
+export const isCash = (room) => String(room?.purchase_type ?? "").trim().toLowerCase() === "cash";
+
 export function installmentInfo(room, now = new Date(), payments = null) {
+  if (isCash(room)) return null;
   const sched = payments && payments.length ? scheduleTotals(payments) : null;
   const lastRow = sched ? scheduleRows(payments).at(-1) : null;
   const amount = num(room?.installment) || (lastRow ? num(lastRow.installment) : 0);

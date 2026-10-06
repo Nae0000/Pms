@@ -14,12 +14,14 @@ const SCHEMA = {
     title: 'ห้องพัก',
     cols: ['id', 'name', 'type', 'price', 'status', 'tenant', 'image',
            'deposit', 'floor', 'size', 'amenities', 'note', 'common_fee', 'common_times',
-           'installment', 'installment_months', 'installment_start', 'installment_paid', 'loan_amount'],
+           'installment', 'installment_months', 'installment_start', 'installment_paid', 'loan_amount',
+           'purchase_type', 'purchase_price'],
     labels: ['รหัส', 'ชื่อห้อง', 'ประเภท', 'ค่าเช่า/เดือน', 'สถานะ', 'ผู้เช่า', 'รูป (ลิงก์รูป/Google Drive)',
              'เงินประกัน', 'ชั้น', 'ขนาด (ตร.ม.)', 'สิ่งอำนวยความสะดวก', 'หมายเหตุ',
              'ค่าส่วนกลาง/ครั้ง', 'จ่ายกี่ครั้ง/ปี (ว่าง=2)',
-             'ค่างวดผ่อน/เดือน', 'ผ่อนทั้งหมดกี่งวด', 'เริ่มผ่อน (yyyy-mm-dd)', 'ผ่อนไปแล้วกี่งวด (ว่าง=คำนวณจากวันเริ่ม)', 'ยอดกู้'],
-    widths: [110, 220, 100, 110, 110, 180, 260, 100, 60, 90, 240, 220, 130, 130, 120, 120, 150, 190, 120],
+             'ค่างวดผ่อน/เดือน', 'ผ่อนทั้งหมดกี่งวด', 'เริ่มผ่อน (yyyy-mm-dd)', 'ผ่อนไปแล้วกี่งวด (ว่าง=คำนวณจากวันเริ่ม)', 'ยอดกู้',
+             'ซื้อแบบ (installment=ผ่อน / cash=ซื้อสด)', 'ราคาซื้อห้อง'],
+    widths: [110, 220, 100, 110, 110, 180, 260, 100, 60, 90, 240, 220, 130, 130, 120, 120, 150, 190, 120, 200, 130],
   },
   Tenants: {
     title: 'ผู้เช่า',
@@ -83,6 +85,7 @@ function setup() {
   });
 
   addValidation_(ss.getSheetByName('Rooms'), 'status', ['available', 'occupied', 'reserved', 'maintenance']);
+  addValidation_(ss.getSheetByName('Rooms'), 'purchase_type', ['installment', 'cash']);
   addValidation_(ss.getSheetByName('Tenants'), 'status', ['Active', 'Past']);
   addValidation_(ss.getSheetByName('Transactions'), 'type', ['income', 'expense']);
   addValidation_(ss.getSheetByName('Transactions'), 'status', ['Paid', 'Pending', 'Overdue', 'Cancelled']);

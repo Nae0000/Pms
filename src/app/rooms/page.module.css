@@ -314,3 +314,5 @@
   .ls_done { background: rgba(30, 64, 175, 0.3); color: #60a5fa; }
   .ls_todo { background: rgba(133, 77, 14, 0.3); color: #facc15; }
 }
+.ls_cash { background: #dbeafe; color: #1e40af; }
+@media (prefers-color-scheme: dark) { .ls_cash { background: rgba(30, 64, 175, 0.3); color: #60a5fa; } }

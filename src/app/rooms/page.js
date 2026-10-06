@@ -5,7 +5,7 @@ import { Plus, Search, Filter, Edit, X, Info, LayoutGrid, List } from "lucide-re
 import styles from "./page.module.css";
 import { roomImageSrc, PLACEHOLDER_IMG } from "@/lib/image";
 import { monthlyCommonFee, DEFAULT_FEE_TIMES } from "@/lib/fees";
-import { installmentInfo } from "@/lib/installment";
+import { installmentInfo, isCash } from "@/lib/installment";
 import { norm, isBlank } from "@/lib/links";
 import { useData } from "../context/DataContext";
 
@@ -34,6 +34,8 @@ export default function RoomsPage() {
   const [roomType, setRoomType] = useState("Standard");
   const [roomPrice, setRoomPrice] = useState("");
   const [roomImage, setRoomImage] = useState("");
+  const [purchaseType, setPurchaseType] = useState("installment");
+  const [purchasePrice, setPurchasePrice] = useState("");
 
   const handleEditClick = (room) => {
     setEditingRoom(room);
@@ -44,6 +46,8 @@ export default function RoomsPage() {
     setRoomType(room.type || "Standard");
     setRoomPrice(room.price || "");
     setRoomImage(room.image || "");
+    setPurchaseType(isCash(room) ? "cash" : "installment");
+    setPurchasePrice(room.purchase_price || "");
     setIsModalOpen(true);
   };
 
@@ -55,6 +59,8 @@ export default function RoomsPage() {
     setRoomType("Standard");
     setRoomPrice("");
     setRoomImage("");
+    setPurchaseType("installment");
+    setPurchasePrice("");
     setIsAddModalOpen(true);
   };
 
@@ -100,6 +106,8 @@ export default function RoomsPage() {
         status: status,
         tenant: status === 'occupied' ? (tenant || "-") : "-",
         image: roomImage,
+        purchase_type: purchaseType,
+        purchase_price: purchasePrice,
       });
       setIsModalOpen(false);
     }
@@ -114,6 +122,8 @@ export default function RoomsPage() {
       status: status,
       tenant: status === 'occupied' ? (tenant || "-") : "-",
       image: roomImage,
+      purchase_type: purchaseType,
+      purchase_price: purchasePrice,
     });
     setIsAddModalOpen(false);
   };
@@ -243,6 +253,19 @@ export default function RoomsPage() {
               <button className={styles.iconBtn} title="แก้ไข (Edit)" aria-label="แก้ไข" onClick={(e) => { e.stopPropagation(); handleEditClick(room); }}>
                 <Edit size={18} />
               </button>
+              {isCash(room) && (
+                <div className={styles.loanBox}>
+                  <div className={styles.loanNums}>
+                    <span>ราคาซื้อ <b>{room.purchase_price ? baht(String(room.purchase_price).replace(/,/g, "")) : "-"}</b></span>
+                    <span>ชำระแล้ว <b>{room.purchase_price ? baht(String(room.purchase_price).replace(/,/g, "")) : "-"}</b></span>
+                  </div>
+                  <div className={styles.loanBar}><div className={styles.loanFill} style={{ width: "100%" }} /></div>
+                  <div className={styles.loanFoot}>
+                    <span className={`${styles.loanStatus} ${styles.ls_cash}`}>ซื้อสด</span>
+                    <span>ไม่มีค่างวด</span>
+                  </div>
+                </div>
+              )}
               {(() => {
                 const inst = installmentInfo(room, new Date(), paymentsOf(room));
                 if (!inst) return null;
@@ -403,6 +426,27 @@ export default function RoomsPage() {
               </div>
             </div>
 
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>การซื้อห้อง</label>
+                <select className="input-field" value={purchaseType} onChange={(e) => setPurchaseType(e.target.value)} style={{ width: '100%' }}>
+                  <option value="installment">ผ่อนชำระ</option>
+                  <option value="cash">ซื้อสด</option>
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>ราคาซื้อห้อง (บาท)</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(e.target.value)}
+                  placeholder="e.g. 1,200,000"
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Status (สถานะ)</label>
               <select 
@@ -529,6 +573,27 @@ export default function RoomsPage() {
               </div>
             </div>
 
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>การซื้อห้อง</label>
+                <select className="input-field" value={purchaseType} onChange={(e) => setPurchaseType(e.target.value)} style={{ width: '100%' }}>
+                  <option value="installment">ผ่อนชำระ</option>
+                  <option value="cash">ซื้อสด</option>
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>ราคาซื้อห้อง (บาท)</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(e.target.value)}
+                  placeholder="e.g. 1,200,000"
+                  style={{ width: '100%' }}
+                />
+              </div>
+            </div>
+
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>Status (สถานะ)</label>
               <select 
@@ -623,6 +688,15 @@ export default function RoomsPage() {
                 {viewingRoom.deposit && <div><p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>เงินประกัน</p><p style={{ fontSize: '1rem', fontWeight: '500' }}>฿{viewingRoom.deposit}</p></div>}
                 {viewingRoom.floor && <div><p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ชั้น</p><p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.floor}</p></div>}
                 {viewingRoom.size && <div><p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>ขนาด</p><p style={{ fontSize: '1rem', fontWeight: '500' }}>{viewingRoom.size} ตร.ม.</p></div>}
+              </div>
+            )}
+            {isCash(viewingRoom) && (
+              <div className={styles.instBox}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>การซื้อห้อง</p>
+                <div className={styles.instGrid}>
+                  <div><span>รูปแบบ</span><strong>ซื้อสด</strong></div>
+                  <div><span>ราคาซื้อ</span><strong>{viewingRoom.purchase_price ? baht(String(viewingRoom.purchase_price).replace(/,/g, "")) : "-"}</strong></div>
+                </div>
               </div>
             )}
             {(() => {

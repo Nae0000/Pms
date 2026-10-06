@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Plus, ChevronDown, ChevronUp, Trash2, ClipboardPaste } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
-import { installmentInfo, scheduleRows, scheduleTotals } from "@/lib/installment";
+import { installmentInfo, scheduleRows, scheduleTotals, isCash } from "@/lib/installment";
 
 const num = (v) => parseFloat(String(v ?? "").replace(/[฿,\s]/g, "")) || 0;
 const baht = (n) => `฿${Math.round(Number(n) || 0).toLocaleString("en-US")}`;
@@ -193,18 +193,41 @@ function LoanRow({ room, payments, onSave, onAdd, onBulk, onUpdate, onDelete }) 
   const setPaid = (n) => onSave(room.id, { installment_paid: String(Math.max(n, 0)) });
   const hasManual = String(room.installment_paid ?? "").trim() !== "";
   const locked = Boolean(info && info.fromTable);
+  const cash = isCash(room);
 
   return (
     <div className={`card ${styles.row}`}>
       <div className={styles.rowHead}>
         <h2>{room.name}</h2>
-        {info ? (
+        {cash ? (
+          <span className={`${styles.badge} ${styles.b_done}`}>ซื้อสด</span>
+        ) : info ? (
           <span className={`${styles.badge} ${styles["b_" + info.status]}`}>{info.statusLabel}</span>
         ) : (
           <span className={`${styles.badge} ${styles.b_todo}`}>ยังไม่ได้กรอก</span>
         )}
       </div>
 
+      <div className={styles.typeSwitch} role="group" aria-label="รูปแบบการซื้อ">
+        <button type="button" className={!cash ? styles.typeOn : undefined} onClick={() => cash && onSave(room.id, { purchase_type: "installment" })}>ผ่อนชำระ</button>
+        <button type="button" className={cash ? styles.typeOn : undefined} onClick={() => !cash && onSave(room.id, { purchase_type: "cash" })}>ซื้อสด</button>
+      </div>
+      <label className={styles.field}>
+        <span>ราคาซื้อห้อง (บาท)</span>
+        <input
+          className="input-field"
+          type="text"
+          inputMode="numeric"
+          placeholder="เช่น 1,200,000"
+          value={"purchase_price" in draft ? draft.purchase_price : room.purchase_price || ""}
+          onChange={(e) => setDraft((d) => ({ ...d, purchase_price: e.target.value }))}
+          onBlur={() => commit("purchase_price")}
+          onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+        />
+      </label>
+      {cash && <p className={styles.hint}>ซื้อสด: ไม่มีค่างวดและตารางผ่อน ไม่ถูกนับเป็นค่าใช้จ่ายรายเดือน</p>}
+
+      {!cash && (<>
       {info && (
         <div className={styles.summary}>
           <div className={styles.nums}>
@@ -269,6 +292,7 @@ function LoanRow({ room, payments, onSave, onAdd, onBulk, onUpdate, onDelete }) 
         </div>
       </div>
       {!info && <p className={styles.hint}>กรอกค่างวด/เดือน หรือยอดกู้ก่อน แล้วจะเห็นหลอดความคืบหน้า</p>}
+      </>)}
     </div>
   );
 }
@@ -290,6 +314,8 @@ export default function LoansPage() {
   const totalLoan = infos.reduce((s, i) => s + i.loan, 0);
   const totalPaid = infos.reduce((s, i) => s + i.paidAmount, 0);
   const monthly = infos.filter((i) => !i.done).reduce((s, i) => s + i.amount, 0);
+  const cashRooms = list.filter(isCash);
+  const cashTotal = cashRooms.reduce((s, r) => s + num(r.purchase_price), 0);
 
   return (
     <div className="page-container animate-fade-in">
@@ -303,6 +329,7 @@ export default function LoansPage() {
         <div><span>ยอดกู้รวม</span><strong>{baht(totalLoan)}</strong></div>
         <div><span>ผ่อนไปแล้วรวม</span><strong style={{ color: "var(--secondary)" }}>{baht(totalPaid)}</strong></div>
         <div><span>ค่างวดรวม/เดือน</span><strong>{baht(monthly)}</strong></div>
+        {cashRooms.length > 0 && <div><span>ซื้อสด {cashRooms.length} ห้อง</span><strong>{baht(cashTotal)}</strong></div>}
       </div>
 
       {list.length === 0 ? (
