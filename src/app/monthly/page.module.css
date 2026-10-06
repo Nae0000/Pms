@@ -45,3 +45,39 @@
 .feeBox { margin-top: 0.9rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-light); display: flex; flex-direction: column; gap: 0.35rem; }
 .feeRow { display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted); }
 .feeNet { font-size: 1rem; font-weight: 600; color: var(--text-main); }
+
+/* ---- partial payments, arrears, pay sheet ---- */
+.st_partial { border-left-color: var(--warning); }
+.partialBox { display: flex; flex-direction: column; gap: 0.35rem; margin-bottom: 0.6rem; }
+.partialNums { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.85rem; color: var(--text-muted); flex-wrap: wrap; }
+.partialNums b { color: var(--text-main); }
+.miniBar { height: 8px; border-radius: 999px; background: var(--bg-input); overflow: hidden; }
+.miniFill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.warnTxt { color: var(--warning); }
+.okTxt { color: var(--secondary); }
+.arrears { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem; padding: 0.45rem 0.65rem; margin-bottom: 0.6rem; border-radius: var(--radius-md); background: rgba(239, 68, 68, 0.1); color: var(--danger); font-size: 0.82rem; }
+.arrears span { color: var(--text-muted); }
+
+.history { margin-top: 0.6rem; padding-top: 0.5rem; border-top: 1px dashed var(--border-light); display: flex; flex-direction: column; gap: 0.2rem; }
+.historyRow { display: flex; align-items: center; gap: 0.75rem; font-size: 0.88rem; min-height: 40px; }
+.historyRow span { color: var(--text-muted); flex: 1; }
+.histDel { width: 40px; height: 40px; border: none; background: transparent; color: var(--danger); border-radius: 8px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.histDel:active { background: rgba(239, 68, 68, 0.12); }
+
+.sheetBody { display: flex; flex-direction: column; gap: 0.9rem; margin-top: 0.5rem; }
+.sheetStatus { display: flex; gap: 1.25rem; flex-wrap: wrap; padding: 0.75rem 0.9rem; border-radius: var(--radius-md); background: var(--bg-input); }
+.sheetStatus div { display: flex; flex-direction: column; gap: 0.1rem; }
+.sheetStatus span { font-size: 0.75rem; color: var(--text-muted); }
+.sheetStatus b { font-size: 1.05rem; }
+.sheetField { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.8rem; color: var(--text-muted); flex: 1; min-width: 0; }
+.sheetRow { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.chip { min-height: 44px; padding: 0 0.9rem; border-radius: 999px; border: 1px solid var(--border-light); background: var(--bg-card); color: var(--text-main); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.chip:active { background: var(--bg-input); }
+.autoToggle { display: flex; gap: 0.6rem; align-items: center; font-size: 0.85rem; min-height: 40px; }
+.autoToggle input { width: 20px; height: 20px; }
+.sheetNote { font-size: 0.78rem; color: var(--text-muted); }
+.preview { border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 0.7rem 0.85rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.previewTitle { font-weight: 600; font-size: 0.88rem; }
+.previewRow { display: grid; grid-template-columns: 1fr auto; gap: 0.1rem 0.75rem; font-size: 0.85rem; padding: 0.25rem 0; border-top: 1px dashed var(--border-light); }
+.previewRow em { grid-column: 1 / -1; font-style: normal; font-size: 0.76rem; }

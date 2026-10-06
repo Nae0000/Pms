@@ -1,31 +1,163 @@
 "use client";
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Phone, MessageCircle, CheckCircle2, Clock, AlertTriangle, Undo2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Phone, MessageCircle, CheckCircle2, Clock, AlertTriangle, History, X, Trash2, PlusCircle, CircleDot } from "lucide-react";
 import styles from "./page.module.css";
 import { useData } from "../context/DataContext";
 import { monthlyCommonFee } from "@/lib/fees";
 import { installmentInfo } from "@/lib/installment";
+import { isCounted } from "@/lib/finance";
+import { num, isRentTx, keyOf, addMonths, labelOf, paidMap, trackingStart, arrearsFor, allocate, MONTHS_TH } from "@/lib/rent";
 
 const DEFAULT_DUE_DAY = 5;
-const MONTHS_TH = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-const ORDER = { overdue: 0, due: 1, paid: 2 };
+const ORDER = { overdue: 0, partial: 1, due: 2, paid: 3 };
 
-const num = (v) => parseFloat(String(v ?? "").replace(/,/g, "")) || 0;
 const baht = (n) => `฿${Math.round(n).toLocaleString("en-US")}`;
+const money = (n) => Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
 const pad = (n) => String(n).padStart(2, "0");
 const todayStr = () => {
   const d = new Date();
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
-const isRent = (t) => t.type === "income" && /^(rent|ค่าเช่า)/i.test(t.category || "");
+
+// Bottom sheet: record one payment. It can be a part-payment, the full month, an old debt or several months at once.
+function PaySheet({ item, monthKey, supportsPeriod, onClose, onSave }) {
+  const { room, rent, paid, arrears, map } = item;
+  const remaining = Math.max(rent - paid, 0);
+  const arrearsTotal = arrears.reduce((s, a) => s + a.remaining, 0);
+
+  const [amount, setAmount] = useState(String(remaining || ""));
+  const [date, setDate] = useState(todayStr());
+  const [note, setNote] = useState("");
+  const [auto, setAuto] = useState(true);
+  const [busy, setBusy] = useState(false);
+
+  // where money goes, in order: older months still short -> this month -> the next months
+  const targets = [];
+  arrears.forEach((a) => targets.push({ key: a.key, remaining: a.remaining }));
+  if (remaining > 0) targets.push({ key: monthKey, remaining });
+  for (let i = 1; i <= 12; i++) {
+    const k = addMonths(monthKey, i);
+    targets.push({ key: k, remaining: Math.max(rent - (map[k]?.sum || 0), 0) });
+  }
+
+  const value = num(amount);
+  const useAuto = auto && supportsPeriod;
+  const plan = value > 0
+    ? useAuto
+      ? allocate(value, targets)
+      : [{ key: monthKey, amount: value, closes: value >= remaining - 0.004, remainingAfter: Math.max(remaining - value, 0) }]
+    : [];
+
+  const chips = [];
+  if (remaining > 0) chips.push([`จ่ายเต็มเดือนนี้ ${baht(remaining)}`, remaining]);
+  if (supportsPeriod && arrearsTotal > 0) chips.push([`ยอดค้างทั้งหมด ${baht(arrearsTotal + remaining)}`, arrearsTotal + remaining]);
+  if (remaining > 1) chips.push([`ครึ่งหนึ่ง ${baht(remaining / 2)}`, Math.round(remaining / 2)]);
+  if (remaining <= 0 && rent > 0) chips.push([`ล่วงหน้า 1 เดือน ${baht(rent)}`, rent]);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!plan.length || busy) return;
+    setBusy(true);
+    const rows = plan.map((a) => ({
+      date,
+      description: `ค่าเช่า ${labelOf(a.key)} - ${room.name}${a.closes ? "" : " (บางส่วน)"}${note.trim() ? ` · ${note.trim()}` : ""}`,
+      category: "Rent",
+      type: "income",
+      expense_type: "",
+      amount: String(Math.round(a.amount * 100) / 100),
+      status: "Paid",
+      room: room.name,
+      period: a.key,
+    }));
+    await onSave(rows);
+    setBusy(false);
+    onClose();
+  };
+
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content glass" onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h2 style={{ fontSize: "1.15rem", fontWeight: 600 }}>รับชำระ {room.name}</h2>
+            <div style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>ค่าเช่า {baht(rent)}/เดือน · {labelOf(monthKey)}</div>
+          </div>
+          <button type="button" onClick={onClose} aria-label="ปิด" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)" }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={submit} className={styles.sheetBody}>
+          <div className={styles.sheetStatus}>
+            <div><span>จ่ายแล้ว</span><b>{baht(paid)}</b></div>
+            <div><span>ค้างเดือนนี้</span><b style={{ color: remaining > 0 ? "var(--warning)" : "var(--secondary)" }}>{baht(remaining)}</b></div>
+            {arrearsTotal > 0 && <div><span>ค้างยกมา</span><b style={{ color: "var(--danger)" }}>{baht(arrearsTotal)}</b></div>}
+          </div>
+
+          <label className={styles.sheetField}>
+            <span>จำนวนเงินที่ได้รับ (บาท)</span>
+            <input className="input-field" inputMode="decimal" autoFocus value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="เช่น 2,000" />
+          </label>
+
+          {chips.length > 0 && (
+            <div className={styles.chips}>
+              {chips.map(([label, v]) => (
+                <button type="button" key={label} className={styles.chip} onClick={() => setAmount(String(v))}>{label}</button>
+              ))}
+            </div>
+          )}
+
+          <div className={styles.sheetRow}>
+            <label className={styles.sheetField}>
+              <span>วันที่รับเงิน</span>
+              <input className="input-field" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+            </label>
+            <label className={styles.sheetField}>
+              <span>หมายเหตุ (ถ้ามี)</span>
+              <input className="input-field" value={note} onChange={(e) => setNote(e.target.value)} placeholder="เช่น โอนเข้าบัญชี" />
+            </label>
+          </div>
+
+          {supportsPeriod ? (
+            <label className={styles.autoToggle}>
+              <input type="checkbox" checked={auto} onChange={(e) => setAuto(e.target.checked)} />
+              <span>ตัดยอดอัตโนมัติ: ค้างเก่าก่อน → เดือนนี้ → เดือนถัดไป</span>
+            </label>
+          ) : (
+            <p className={styles.sheetNote}>บันทึกเข้าเดือนนี้เท่านั้น (ตัดยอดย้อนหลัง/ล่วงหน้าจะใช้ได้หลังอัปเดตสคริปต์ Google Sheet)</p>
+          )}
+
+          {plan.length > 0 && (
+            <div className={styles.preview}>
+              <div className={styles.previewTitle}>จะบันทึก {plan.length} รายการ รวม {baht(plan.reduce((s, a) => s + a.amount, 0))}</div>
+              {plan.map((a) => (
+                <div key={a.key} className={styles.previewRow}>
+                  <span>{labelOf(a.key)}</span>
+                  <b>{money(a.amount)}</b>
+                  <em className={a.closes ? styles.okTxt : styles.warnTxt}>{a.closes ? "ปิดยอดงวดนี้" : `ยังค้าง ${baht(a.remainingAfter)}`}</em>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button className="btn btn-primary" type="submit" disabled={!plan.length || busy} style={{ width: "100%", minHeight: 48 }}>
+            {busy ? "กำลังบันทึก..." : plan.length ? `บันทึกรับชำระ ${baht(plan.reduce((s, a) => s + a.amount, 0))}` : "กรอกจำนวนเงิน"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 export default function MonthlyPage() {
-  const { rooms, tenants, transactions, addTransaction, deleteTransaction, isInitialLoading, loanPayments } = useData();
+  const { rooms, tenants, transactions, addTransactions, deleteTransaction, isInitialLoading, loanPayments, features } = useData();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
   });
   const [filter, setFilter] = useState("all");
+  const [sheetRoom, setSheetRoom] = useState(null); // room id
+  const [openHistory, setOpenHistory] = useState({});
 
   if (isInitialLoading) {
     return (
@@ -35,9 +167,11 @@ export default function MonthlyPage() {
     );
   }
 
-  const monthKey = `${cursor.y}-${pad(cursor.m + 1)}`;
+  const monthKey = keyOf(cursor.y, cursor.m);
   const today = todayStr();
   const daysInMonth = new Date(cursor.y, cursor.m + 1, 0).getDate();
+  const supportsPeriod = Boolean(features && features.period);
+  const tracking = trackingStart(transactions);
 
   const shift = (delta) => setCursor(({ y, m }) => {
     const d = new Date(y, m + delta, 1);
@@ -51,13 +185,15 @@ export default function MonthlyPage() {
       const rent = num(room.price);
       const due = Math.min(Math.max(parseInt(tenant?.due_day, 10) || DEFAULT_DUE_DAY, 1), daysInMonth);
       const dueDate = `${monthKey}-${pad(due)}`;
-      const payments = (transactions || []).filter(
-        (t) => isRent(t) && t.room === room.name && String(t.date || "").startsWith(monthKey) && t.status === "Paid"
-      );
-      const paid = payments.reduce((s, t) => s + num(t.amount), 0);
-      const isPaid = rent > 0 ? paid >= rent : payments.length > 0;
-      const status = isPaid ? "paid" : today > dueDate ? "overdue" : "due";
-      return { room, tenant, rent, dueDate, due, paid, payments, status, fee: monthlyCommonFee(room) };
+      const map = paidMap(transactions, room.name);
+      const cur = map[monthKey] || { sum: 0, rows: [] };
+      const payments = [...cur.rows].sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      const paid = cur.sum;
+      const arrears = arrearsFor({ rent, tenant, map, currentKey: monthKey, tracking });
+      const arrearsTotal = arrears.reduce((s, a) => s + a.remaining, 0);
+      const isPaid = rent > 0 ? paid >= rent - 0.5 : payments.length > 0;
+      const status = isPaid ? "paid" : paid > 0 ? "partial" : today > dueDate ? "overdue" : "due";
+      return { room, tenant, rent, dueDate, due, paid, payments, status, map, arrears, arrearsTotal, fee: monthlyCommonFee(room) };
     })
     .sort((a, b) => (ORDER[a.status] - ORDER[b.status]) ||
       a.dueDate.localeCompare(b.dueDate) ||
@@ -65,47 +201,40 @@ export default function MonthlyPage() {
 
   const expected = items.reduce((s, i) => s + i.rent, 0);
   const collected = items.reduce((s, i) => s + (i.rent > 0 ? Math.min(i.paid, i.rent) : i.paid), 0);
+  const arrearsAll = items.reduce((s, i) => s + i.arrearsTotal, 0);
+  // money that actually arrived in this calendar month, whichever month's rent it paid
+  const cashIn = (transactions || [])
+    .filter((t) => isRentTx(t) && isCounted(t) && String(t.date || "").startsWith(monthKey))
+    .reduce((s, t) => s + num(t.amount), 0);
   // The owner pays common-area fees on every managed room, occupied or not.
   const feeTotal = (rooms || []).reduce((sum, r) => sum + monthlyCommonFee(r), 0);
   const instTotal = (rooms || []).map((r) => installmentInfo(r, new Date(), (loanPayments || []).filter((p) => p.room === r.name))).filter((i) => i && !i.done).reduce((sum, i) => sum + i.amount, 0);
   const net = collected - feeTotal - instTotal;
   const counts = {
     all: items.length,
-    overdue: items.filter((i) => i.status === "overdue").length,
+    overdue: items.filter((i) => i.status === "overdue" || i.arrearsTotal > 0).length,
+    partial: items.filter((i) => i.status === "partial").length,
     due: items.filter((i) => i.status === "due").length,
     paid: items.filter((i) => i.status === "paid").length,
   };
-  const shown = filter === "all" ? items : items.filter((i) => i.status === filter);
+  const shown = filter === "all" ? items
+    : filter === "overdue" ? items.filter((i) => i.status === "overdue" || i.arrearsTotal > 0)
+    : items.filter((i) => i.status === filter);
   const pct = expected > 0 ? Math.min(100, Math.round((collected / expected) * 100)) : 0;
 
-  const markPaid = (it) => {
-    const remaining = it.rent - it.paid;
-    addTransaction({
-      date: today,
-      description: `ค่าเช่า ${MONTHS_TH[cursor.m]} ${cursor.y + 543} - ${it.room.name}`,
-      category: "Rent",
-      type: "income",
-      expense_type: "",
-      amount: String(remaining > 0 ? remaining : it.rent),
-      status: "Paid",
-      room: it.room.name,
-    });
-  };
-
-  const undo = (it) => {
-    const last = it.payments[it.payments.length - 1];
-    // Undo = remove the payment row (the sheet's status list has no "cancelled" value)
-    if (last && confirm(`ลบรายการรับชำระ ${baht(num(last.amount))} ของ ${it.room.name} ?`)) {
-      deleteTransaction(last.id);
-    }
+  const removePayment = (room, t) => {
+    if (confirm(`ลบรายการรับชำระ ${baht(num(t.amount))} (${t.date}) ของ ${room.name} ?`)) deleteTransaction(t.id);
   };
 
   const tabs = [
     ["all", "ทั้งหมด"],
-    ["overdue", "เกินกำหนด"],
+    ["overdue", "ค้าง/เกินกำหนด"],
+    ["partial", "จ่ายบางส่วน"],
     ["due", "รอจ่าย"],
     ["paid", "จ่ายแล้ว"],
   ];
+
+  const sheetItem = sheetRoom ? items.find((i) => i.room.id === sheetRoom) : null;
 
   return (
     <div className="page-container animate-fade-in">
@@ -120,7 +249,7 @@ export default function MonthlyPage() {
       <div className={`card glass ${styles.summary}`}>
         <div className={styles.summaryTop}>
           <div>
-            <div className={styles.sLabel}>เก็บแล้ว</div>
+            <div className={styles.sLabel}>เก็บแล้ว (ค่าเช่างวดเดือนนี้)</div>
             <div className={styles.sBig}>{baht(collected)}</div>
           </div>
           <div style={{ textAlign: "right" }}>
@@ -130,9 +259,15 @@ export default function MonthlyPage() {
         </div>
         <div className={styles.bar} aria-label={`เก็บแล้ว ${pct}%`}><div className={styles.barFill} style={{ width: `${pct}%` }} /></div>
         <div className={styles.sFoot}>
-          <span>ค้าง {baht(Math.max(expected - collected, 0))}</span>
-          <span>{counts.paid}/{counts.all} ห้องจ่ายแล้ว</span>
+          <span>ค้างเดือนนี้ {baht(Math.max(expected - collected, 0))}</span>
+          <span>{counts.paid}/{counts.all} ห้องจ่ายครบ</span>
         </div>
+        {(arrearsAll > 0 || cashIn !== collected) && (
+          <div className={styles.feeBox}>
+            {arrearsAll > 0 && <div className={styles.feeRow}><span>ยอดค้างยกมาจากเดือนก่อน</span><span style={{ color: "var(--danger)" }}>{baht(arrearsAll)}</span></div>}
+            <div className={styles.feeRow}><span>เงินเข้าจริงในเดือนนี้ (ทุกงวด)</span><span>{baht(cashIn)}</span></div>
+          </div>
+        )}
         {(feeTotal > 0 || instTotal > 0) && (
           <div className={styles.feeBox}>
             {feeTotal > 0 && <div className={styles.feeRow}><span>ค่าส่วนกลาง (เฉลี่ย/เดือน)</span><span>−{baht(feeTotal)}</span></div>}
@@ -166,8 +301,11 @@ export default function MonthlyPage() {
             const lineMatch = contact.match(/line\s*(?:id)?\s*[:：]?\s*@?\s*([\w.\-]+)/i);
             const lineId = lineMatch ? lineMatch[1] : "";
             const contractEnd = t?.contractEnd || "";
+            const remaining = Math.max(it.rent - it.paid, 0);
+            const cls = it.status === "partial" ? (today > it.dueDate ? "st_overdue" : "st_partial") : "st_" + it.status;
+            const showHistory = openHistory[it.room.id];
             return (
-              <div key={it.room.id} className={`card ${styles.item} ${styles["st_" + it.status]}`}>
+              <div key={it.room.id} className={`card ${styles.item} ${styles[cls]}`}>
                 <div className={styles.itemTop}>
                   <div className={styles.itemMain}>
                     <div className={styles.roomName}>{it.room.name}</div>
@@ -179,28 +317,73 @@ export default function MonthlyPage() {
                 </div>
 
                 <div className={styles.itemMid}>
-                  {it.status === "paid" && <span className="badge badge-success"><CheckCircle2 size={13} /> จ่ายแล้ว</span>}
+                  {it.status === "paid" && <span className="badge badge-success"><CheckCircle2 size={13} /> จ่ายครบแล้ว</span>}
+                  {it.status === "partial" && <span className="badge badge-warning"><CircleDot size={13} /> จ่ายบางส่วน</span>}
                   {it.status === "due" && <span className="badge badge-warning"><Clock size={13} /> ครบกำหนด {it.due} {MONTHS_TH[cursor.m]}</span>}
-                  {it.status === "overdue" && <span className="badge badge-danger"><AlertTriangle size={13} /> เกินกำหนด (วันที่ {it.due})</span>}
-                  {it.paid > 0 && it.status !== "paid" && <span className={styles.partial}>จ่ายแล้ว {baht(it.paid)}</span>}
+                  {(it.status === "overdue" || (it.status === "partial" && today > it.dueDate)) && <span className="badge badge-danger"><AlertTriangle size={13} /> เกินกำหนด (วันที่ {it.due})</span>}
                   {contractEnd && <span className={styles.contract}>สัญญาถึง {contractEnd}</span>}
                   {it.fee > 0 && <span className={styles.contract}>ค่าส่วนกลางเฉลี่ย {baht(it.fee)}/เดือน</span>}
                 </div>
+
+                {it.paid > 0 && it.rent > 0 && (
+                  <div className={styles.partialBox}>
+                    <div className={styles.partialNums}>
+                      <span>จ่ายแล้ว <b>{baht(it.paid)}</b> จาก {baht(it.rent)}</span>
+                      {remaining > 0 ? <span className={styles.warnTxt}>ค้าง <b>{baht(remaining)}</b></span> : it.paid > it.rent + 0.5 ? <span className={styles.okTxt}>จ่ายเกิน {baht(it.paid - it.rent)}</span> : null}
+                    </div>
+                    <div className={styles.miniBar}><div className={styles.miniFill} style={{ width: `${Math.min(100, Math.round((it.paid / it.rent) * 100))}%` }} /></div>
+                  </div>
+                )}
+
+                {it.arrearsTotal > 0 && (
+                  <div className={styles.arrears}>
+                    <AlertTriangle size={14} /> ค้างยกมา <b>{baht(it.arrearsTotal)}</b>
+                    <span> ({it.arrears.map((a) => labelOf(a.key, true)).join(", ")})</span>
+                  </div>
+                )}
 
                 <div className={styles.actions}>
                   {t?.phone && <a className={styles.act} href={`tel:${String(t.phone).replace(/[^\d+]/g, "")}`}><Phone size={16} /> โทร</a>}
                   {lineId && <a className={styles.act} href={`https://line.me/R/ti/p/~${encodeURIComponent(lineId)}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={16} /> LINE</a>}
                   <span style={{ flex: 1 }} />
-                  {it.status === "paid" ? (
-                    <button className={styles.undo} onClick={() => undo(it)}><Undo2 size={16} /> ยกเลิก</button>
+                  {it.payments.length > 0 && (
+                    <button className={styles.undo} onClick={() => setOpenHistory((o) => ({ ...o, [it.room.id]: !o[it.room.id] }))} aria-expanded={Boolean(showHistory)}>
+                      <History size={16} /> {it.payments.length}
+                    </button>
+                  )}
+                  {it.status === "paid" && it.arrearsTotal === 0 ? (
+                    <button className={styles.undo} onClick={() => setSheetRoom(it.room.id)}><PlusCircle size={16} /> รับเพิ่ม</button>
                   ) : (
-                    <button className={styles.pay} onClick={() => markPaid(it)}><CheckCircle2 size={18} /> รับชำระ</button>
+                    <button className={styles.pay} onClick={() => setSheetRoom(it.room.id)}><CheckCircle2 size={18} /> รับชำระ</button>
                   )}
                 </div>
+
+                {showHistory && (
+                  <div className={styles.history}>
+                    {it.payments.map((p) => (
+                      <div key={p.id} className={styles.historyRow}>
+                        <span>{p.date}</span>
+                        <b>{baht(num(p.amount))}</b>
+                        <button type="button" className={styles.histDel} onClick={() => removePayment(it.room, p)} aria-label="ลบรายการนี้"><Trash2 size={15} /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
+      )}
+
+      {sheetItem && (
+        <PaySheet
+          key={sheetItem.room.id}
+          item={sheetItem}
+          monthKey={monthKey}
+          supportsPeriod={supportsPeriod}
+          onClose={() => setSheetRoom(null)}
+          onSave={addTransactions}
+        />
       )}
     </div>
   );

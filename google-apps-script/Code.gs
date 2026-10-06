@@ -35,9 +35,9 @@ const SCHEMA = {
   },
   Transactions: {
     title: 'การเงิน',
-    cols: ['id', 'date', 'description', 'category', 'type', 'expense_type', 'amount', 'status', 'room', 'created_at'],
-    labels: ['รหัส', 'วันที่', 'รายละเอียด', 'หมวดหมู่', 'ประเภท', 'ชนิดค่าใช้จ่าย', 'จำนวนเงิน', 'สถานะ', 'ห้อง', 'สร้างเมื่อ'],
-    widths: [110, 100, 260, 130, 90, 110, 110, 90, 110, 150],
+    cols: ['id', 'date', 'description', 'category', 'type', 'expense_type', 'amount', 'status', 'room', 'created_at', 'period'],
+    labels: ['รหัส', 'วันที่รับเงิน', 'รายละเอียด', 'หมวดหมู่', 'ประเภท', 'ชนิดค่าใช้จ่าย', 'จำนวนเงิน', 'สถานะ', 'ห้อง', 'สร้างเมื่อ', 'จ่ายค่าเช่าของเดือน (yyyy-mm)'],
+    widths: [110, 100, 260, 130, 90, 110, 110, 90, 110, 150, 150],
   },
   // Month-by-month instalment table of each room (same columns as the owner's own spreadsheet)
   LoanPayments: {
@@ -197,6 +197,7 @@ function doGet(e) {
     tenants: readTable_('Tenants'),
     transactions: readTable_('Transactions'),
     loan_payments: readTableSafe_('LoanPayments'),
+    features: { period: true },
   });
 }
 

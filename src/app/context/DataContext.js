@@ -85,6 +85,7 @@ export const DataProvider = ({ children }) => {
   const [tenants, setTenants] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loanPayments, setLoanPayments] = useState([]);
+  const [features, setFeatures] = useState({});
   const [importLoading, setImportLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -111,10 +112,11 @@ export const DataProvider = ({ children }) => {
         (data.transactions || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)))
       );
       setLoanPayments(data.loan_payments || []);
+      setFeatures(data.features || {});
       setLoadError("");
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({
-          rooms: data.rooms || [], tenants: data.tenants || [], transactions: data.transactions || [], loan_payments: data.loan_payments || [],
+          rooms: data.rooms || [], tenants: data.tenants || [], transactions: data.transactions || [], loan_payments: data.loan_payments || [], features: data.features || {},
         }));
       } catch (e) { /* storage full or blocked: caching is optional */ }
     } catch (err) {
@@ -158,6 +160,7 @@ export const DataProvider = ({ children }) => {
         setTenants(cached.tenants || []);
         setTransactions(cached.transactions || []);
         setLoanPayments(cached.loan_payments || []);
+        setFeatures(cached.features || {});
         setIsInitialLoading(false);
       }
     } catch (e) { /* storage unavailable or corrupt: just load normally */ }
@@ -475,6 +478,14 @@ export const DataProvider = ({ children }) => {
     if (row) setTransactions(prev => [row, ...prev]);
   };
 
+  // Several payment rows in one request (e.g. one transfer spread over months). Not retried automatically:
+  // a retry could add the rows twice, so on failure the page reloads and shows what really landed.
+  const addTransactions = async (rows) => {
+    const saved = await run(() => api.insertRows('transactions', rows));
+    if (saved) setTransactions(prev => [...saved, ...prev]);
+    return saved ? saved.length : 0;
+  };
+
   const updateTransaction = async (id, updatedData) => {
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
     await run(() => api.updateRow('transactions', id, updatedData));
@@ -491,7 +502,7 @@ export const DataProvider = ({ children }) => {
       tenants, setTenants, updateTenant, addTenant, addMultipleTenants, deleteTenant,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       importFromGoogleSheets, importLoading, isInitialLoading,
-      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, deleteRoom, loanPayments, addLoanPayment, addLoanPayments, updateLoanPayment, deleteLoanPayment, isRefreshing, syncing, syncFromForm
+      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, deleteRoom, features, addTransactions, loanPayments, addLoanPayment, addLoanPayments, updateLoanPayment, deleteLoanPayment, isRefreshing, syncing, syncFromForm
     }}>
       {children}
     </DataContext.Provider>
