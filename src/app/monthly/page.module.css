@@ -53,6 +53,7 @@
 .partialNums b { color: var(--text-main); }
 .miniBar { height: 8px; border-radius: 999px; background: var(--bg-input); overflow: hidden; }
 .miniFill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.miniFull { background: linear-gradient(90deg, #10b981, #34d399); }
 .warnTxt { color: var(--warning); }
 .okTxt { color: var(--secondary); }
 .arrears { display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem; padding: 0.45rem 0.65rem; margin-bottom: 0.6rem; border-radius: var(--radius-md); background: rgba(239, 68, 68, 0.1); color: var(--danger); font-size: 0.82rem; }

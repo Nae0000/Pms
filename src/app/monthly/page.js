@@ -331,7 +331,7 @@ export default function MonthlyPage() {
                       <span>จ่ายแล้ว <b>{baht(it.paid)}</b> จาก {baht(it.rent)}</span>
                       {remaining > 0 ? <span className={styles.warnTxt}>ค้าง <b>{baht(remaining)}</b></span> : it.paid > it.rent + 0.5 ? <span className={styles.okTxt}>จ่ายเกิน {baht(it.paid - it.rent)}</span> : null}
                     </div>
-                    <div className={styles.miniBar}><div className={styles.miniFill} style={{ width: `${Math.min(100, Math.round((it.paid / it.rent) * 100))}%` }} /></div>
+                    <div className={styles.miniBar}><div className={`${styles.miniFill} ${it.paid >= it.rent - 0.5 ? styles.miniFull : ""}`} style={{ width: `${Math.min(100, Math.round((it.paid / it.rent) * 100))}%` }} /></div>
                   </div>
                 )}
 
