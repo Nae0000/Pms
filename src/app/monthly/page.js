@@ -29,7 +29,6 @@ function PaySheet({ item, monthKey, supportsPeriod, onClose, onSave }) {
   const [date, setDate] = useState(todayStr());
   const [note, setNote] = useState("");
   const [auto, setAuto] = useState(true);
-  const [busy, setBusy] = useState(false);
 
   // where money goes, in order: older months still short -> this month -> the next months
   const targets = [];
@@ -54,10 +53,9 @@ function PaySheet({ item, monthKey, supportsPeriod, onClose, onSave }) {
   if (remaining > 1) chips.push([`ครึ่งหนึ่ง ${baht(remaining / 2)}`, Math.round(remaining / 2)]);
   if (remaining <= 0 && rent > 0) chips.push([`ล่วงหน้า 1 เดือน ${baht(rent)}`, rent]);
 
-  const submit = async (e) => {
+  const submit = (e) => {
     e.preventDefault();
-    if (!plan.length || busy) return;
-    setBusy(true);
+    if (!plan.length) return;
     const rows = plan.map((a) => ({
       date,
       description: `ค่าเช่า ${labelOf(a.key)} - ${room.name}${a.closes ? "" : " (บางส่วน)"}${note.trim() ? ` · ${note.trim()}` : ""}`,
@@ -69,8 +67,7 @@ function PaySheet({ item, monthKey, supportsPeriod, onClose, onSave }) {
       room: room.name,
       period: a.key,
     }));
-    await onSave(rows);
-    setBusy(false);
+    onSave(rows);
     onClose();
   };
 
@@ -140,8 +137,10 @@ function PaySheet({ item, monthKey, supportsPeriod, onClose, onSave }) {
             </div>
           )}
 
-          <button className="btn btn-primary" type="submit" disabled={!plan.length || busy} style={{ width: "100%", minHeight: 48 }}>
-            {busy ? "กำลังบันทึก..." : plan.length ? `บันทึกรับชำระ ${baht(plan.reduce((s, a) => s + a.amount, 0))}` : "กรอกจำนวนเงิน"}
+          <p className={styles.sheetNote}>กดบันทึกแล้วยอดขึ้นหน้าจอทันที ระบบจะส่งเข้า Google Sheet ให้อัตโนมัติ (อาจใช้เวลาถึง ~30 วินาที) ไม่ต้องกดซ้ำ</p>
+
+          <button className="btn btn-primary" type="submit" disabled={!plan.length} style={{ width: "100%", minHeight: 48 }}>
+            {plan.length ? `บันทึกรับชำระ ${baht(plan.reduce((s, a) => s + a.amount, 0))}` : "กรอกจำนวนเงิน"}
           </button>
         </form>
       </div>
@@ -150,7 +149,7 @@ function PaySheet({ item, monthKey, supportsPeriod, onClose, onSave }) {
 }
 
 export default function MonthlyPage() {
-  const { rooms, tenants, transactions, addTransactions, deleteTransaction, isInitialLoading, loanPayments, features } = useData();
+  const { rooms, tenants, transactions, addTransactions, deleteTransaction, isInitialLoading, loanPayments, features, unsyncedIds } = useData();
   const [cursor, setCursor] = useState(() => {
     const d = new Date();
     return { y: d.getFullYear(), m: d.getMonth() };
@@ -321,6 +320,7 @@ export default function MonthlyPage() {
                   {it.status === "partial" && <span className="badge badge-warning"><CircleDot size={13} /> จ่ายบางส่วน</span>}
                   {it.status === "due" && <span className="badge badge-warning"><Clock size={13} /> ครบกำหนด {it.due} {MONTHS_TH[cursor.m]}</span>}
                   {(it.status === "overdue" || (it.status === "partial" && today > it.dueDate)) && <span className="badge badge-danger"><AlertTriangle size={13} /> เกินกำหนด (วันที่ {it.due})</span>}
+                  {it.payments.some((p) => unsyncedIds.includes(p.id)) && <span className="badge badge-warning">กำลังบันทึกลง Sheet…</span>}
                   {contractEnd && <span className={styles.contract}>สัญญาถึง {contractEnd}</span>}
                   {it.fee > 0 && <span className={styles.contract}>ค่าส่วนกลางเฉลี่ย {baht(it.fee)}/เดือน</span>}
                 </div>
@@ -364,7 +364,8 @@ export default function MonthlyPage() {
                       <div key={p.id} className={styles.historyRow}>
                         <span>{p.date}</span>
                         <b>{baht(num(p.amount))}</b>
-                        <button type="button" className={styles.histDel} onClick={() => removePayment(it.room, p)} aria-label="ลบรายการนี้"><Trash2 size={15} /></button>
+                        {unsyncedIds.includes(p.id) ? <em className={styles.sending}>กำลังบันทึกลง Sheet…</em> : (
+                        <button type="button" className={styles.histDel} onClick={() => removePayment(it.room, p)} aria-label="ลบรายการนี้"><Trash2 size={15} /></button>)}
                       </div>
                     ))}
                   </div>

@@ -96,6 +96,8 @@ export const DataProvider = ({ children }) => {
 
   const lastFetch = useRef(0);
   const writing = useRef(0);
+  const unsynced = useRef(new Map()); // rows shown on screen but still on their way to the sheet
+  const [unsyncedIds, setUnsyncedIds] = useState([]);
 
   const fetchData = async (silent = false) => {
     if (!api.isConfigured) {
@@ -108,8 +110,10 @@ export const DataProvider = ({ children }) => {
       const data = await api.fetchAll();
       setRooms((data.rooms || []).map(r => ({ ...r, status: r.status || 'available', tenant: r.tenant || '-' })));
       setTenants((data.tenants || []).map(mapTenantFromDB));
+      const serverIds = new Set((data.transactions || []).map(t => String(t.id)));
+      const stillSending = [...unsynced.current.values()].filter(t => !serverIds.has(String(t.id)));
       setTransactions(
-        (data.transactions || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)))
+        [...stillSending, ...(data.transactions || [])].sort((a, b) => String(b.date).localeCompare(String(a.date)))
       );
       setLoanPayments(data.loan_payments || []);
       setFeatures(data.features || {});
@@ -478,12 +482,25 @@ export const DataProvider = ({ children }) => {
     if (row) setTransactions(prev => [row, ...prev]);
   };
 
-  // Several payment rows in one request (e.g. one transfer spread over months). Not retried automatically:
-  // a retry could add the rows twice, so on failure the page reloads and shows what really landed.
-  const addTransactions = async (rows) => {
-    const saved = await run(() => api.insertRows('transactions', rows));
-    if (saved) setTransactions(prev => [...saved, ...prev]);
-    return saved ? saved.length : 0;
+  // Several payment rows in one request (e.g. one transfer spread over months). The rows appear on screen
+  // at once and are sent to the sheet in the background (Google Sheets can take 30+ seconds). Ids are made
+  // here, so the rows keep the same id once saved. Never retried automatically: a retry could add the rows
+  // twice. If the send fails the rows are taken back and the page reloads to show what really landed.
+  const newTxId = (n) => String(Date.now()) + String(n).padStart(3, "0") + Math.floor(Math.random() * 10);
+  const addTransactions = (rows) => {
+    const withIds = rows.map((r, n) => ({ ...r, id: newTxId(n), created_at: new Date().toISOString() }));
+    withIds.forEach(r => unsynced.current.set(r.id, r));
+    setUnsyncedIds([...unsynced.current.keys()]);
+    setTransactions(prev => [...withIds, ...prev]);
+    const done = () => {
+      withIds.forEach(r => unsynced.current.delete(r.id));
+      setUnsyncedIds([...unsynced.current.keys()]);
+    };
+    run(() => api.insertRows('transactions', withIds)).then((saved) => {
+      done();
+      if (!saved) setTransactions(prev => prev.filter(t => !withIds.some(r => r.id === t.id)));
+    });
+    return withIds.length;
   };
 
   const updateTransaction = async (id, updatedData) => {
@@ -502,7 +519,7 @@ export const DataProvider = ({ children }) => {
       tenants, setTenants, updateTenant, addTenant, addMultipleTenants, deleteTenant,
       transactions, addTransaction, updateTransaction, deleteTransaction,
       importFromGoogleSheets, importLoading, isInitialLoading,
-      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, deleteRoom, features, addTransactions, loanPayments, addLoanPayment, addLoanPayments, updateLoanPayment, deleteLoanPayment, isRefreshing, syncing, syncFromForm
+      loadError, saveError, setSaveError, saving: pending > 0, refresh: () => fetchData(), applyFixes, deleteRoom, features, addTransactions, unsyncedIds, loanPayments, addLoanPayment, addLoanPayments, updateLoanPayment, deleteLoanPayment, isRefreshing, syncing, syncFromForm
     }}>
       {children}
     </DataContext.Provider>

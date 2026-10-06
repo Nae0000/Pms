@@ -191,14 +191,64 @@ function readTable_(name) {
 function doGet(e) {
   const p = (e && e.parameter) || {};
   if (p.key !== API_KEY) return out_({ ok: false, error: 'unauthorized' });
-  return out_({
-    ok: true,
-    rooms: readTable_('Rooms'),
-    tenants: readTable_('Tenants'),
-    transactions: readTable_('Transactions'),
-    loan_payments: readTableSafe_('LoanPayments'),
-    features: { period: true },
-  });
+  // Reading four tabs is the slow part, so the answer is kept for a few minutes. Every write through the
+  // app clears it, and so does a hand edit in the sheet (onEdit below).
+  let body = cacheGet_();
+  if (!body) {
+    body = JSON.stringify({
+      ok: true,
+      rooms: readTable_('Rooms'),
+      tenants: readTable_('Tenants'),
+      transactions: readTable_('Transactions'),
+      loan_payments: readTableSafe_('LoanPayments'),
+      features: { period: true },
+    });
+    cachePut_(body);
+  }
+  return ContentService.createTextOutput(body).setMimeType(ContentService.MimeType.JSON);
+}
+
+// ---- read cache (CacheService values are limited to 100 KB, so the JSON is stored in pieces) ----
+const CACHE_PIECE = 30000;
+const CACHE_TTL = 600; // seconds
+
+function cacheGet_() {
+  try {
+    const c = CacheService.getScriptCache();
+    const n = Number(c.get('pms_n'));
+    if (!n) return null;
+    const keys = [];
+    for (let i = 0; i < n; i++) keys.push('pms_' + i);
+    const got = c.getAll(keys);
+    let out = '';
+    for (let i = 0; i < n; i++) {
+      if (got['pms_' + i] == null) return null;
+      out += got['pms_' + i];
+    }
+    return out;
+  } catch (err) {
+    return null;
+  }
+}
+
+function cachePut_(body) {
+  try {
+    const c = CacheService.getScriptCache();
+    const all = {};
+    const n = Math.ceil(body.length / CACHE_PIECE);
+    for (let i = 0; i < n; i++) all['pms_' + i] = body.substr(i * CACHE_PIECE, CACHE_PIECE);
+    c.putAll(all, CACHE_TTL);
+    c.put('pms_n', String(n), CACHE_TTL);  // written last: readers see a complete set or nothing
+  } catch (err) { /* caching is optional */ }
+}
+
+function cacheClear_() {
+  try { CacheService.getScriptCache().remove('pms_n'); } catch (err) { /* ignore */ }
+}
+
+// runs by itself when someone edits a cell in the sheet by hand
+function onEdit() {
+  cacheClear_();
 }
 
 // before setup() has created a new tab the app must still work
@@ -314,6 +364,7 @@ function doPost(e) {
   } catch (err) {
     return out_({ ok: false, error: String(err) });
   } finally {
+    cacheClear_();
     lock.releaseLock();
   }
 }

@@ -81,3 +81,5 @@
 .previewTitle { font-weight: 600; font-size: 0.88rem; }
 .previewRow { display: grid; grid-template-columns: 1fr auto; gap: 0.1rem 0.75rem; font-size: 0.85rem; padding: 0.25rem 0; border-top: 1px dashed var(--border-light); }
 .previewRow em { grid-column: 1 / -1; font-style: normal; font-size: 0.76rem; }
+
+.sending { font-style: normal; font-size: 0.78rem; color: var(--warning); }
